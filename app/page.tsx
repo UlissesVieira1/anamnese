@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Anamnese } from '@/types/anamnese'
 import './globals.css'
+import { log } from 'console'
 
 export default function Home() {
   const [formData, setFormData] = useState<Anamnese>({
@@ -225,21 +226,27 @@ export default function Home() {
 
   // Função para enviar o formulário
   const handleSubmit = async (e: React.FormEvent) => {
+
     e.preventDefault()
     setMessage(null)
 
-    if (!validateForm()) {
+    if (!validateForm()) {      
       return
     }
 
     try {
-      const response = await fetch('/api/anamnese', {
+      
+      // Chama o backend Express na porta 3001
+      const response = await fetch('http://localhost:3001/inserirDadosAnamnese', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(formData),
       })
+
+      console.log(response);
+      
 
       const result = await response.json()
 
@@ -249,7 +256,7 @@ export default function Home() {
         setMessage({ type: 'error', text: result.message || 'Erro ao salvar a ficha. Tente novamente.' })
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Erro ao salvar a ficha. Tente novamente.' })
+      setMessage({ type: 'error', text: 'Erro ao salvar a ficha. Verifique se o servidor está rodando.' })
       console.error('Erro:', error)
     }
   }
