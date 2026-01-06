@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import FichaAnamnese from './models/FichaAnamnese';
-import { log } from 'node:console';
+import { AnamneseTipagem } from './types/anamnese';
 
 const router = Router(); // instancia o router
 
@@ -9,7 +9,7 @@ const router = Router(); // instancia o router
  * @param dadosFormulario Dados recebidos do frontend
  * @returns Dados formatados para inserção no banco
  */
-function mapearDadosParaBanco(dadosFormulario: any) {
+function mapearDadosParaBanco(dadosFormulario: AnamneseTipagem) {
     // Agrupa dados do cliente no campo JSON dados_cliente
     const dadosCliente = {
         endereco: dadosFormulario.endereco || '',
@@ -61,7 +61,7 @@ function mapearDadosParaBanco(dadosFormulario: any) {
 router.post('/inserirDadosAnamnese', async (req: Request, res: Response) => { // rota para inserir dados da anamnese
     try {
         
-        const dadosFormulario = req.body; // pega todos os dados do body
+        const dadosFormulario: AnamneseTipagem = req.body; // pega todos os dados do body
 
         // Validação básica - verifica se nome e cpf foram enviados
         if (!dadosFormulario.nome || !dadosFormulario.cpf) {

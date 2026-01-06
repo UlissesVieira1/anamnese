@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { Anamnese } from '@/types/anamnese'
+import { AnamneseTipagem } from '@/types/anamnese'
 import './globals.css'
 import { log } from 'console'
 
 export default function Home() {
-  const [formData, setFormData] = useState<Anamnese>({
+  const [formData, setFormData] = useState<AnamneseTipagem>({
     nome: '',
     endereco: '',
     rg: '',
