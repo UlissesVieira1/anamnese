@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Ficha de Anamnese',
-  description: 'Sistema de cadastro de fichas de anamnese',
+  title: 'ANAMNESE Tattoo',
+  description: 'Sistema de cadastro de fichas de anamnese para tatuagem',
 }
 
 export default function RootLayout({

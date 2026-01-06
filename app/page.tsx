@@ -7,29 +7,66 @@ import './globals.css'
 export default function Home() {
   const [formData, setFormData] = useState<Anamnese>({
     nome: '',
+    endereco: '',
+    rg: '',
+    cpf: '',
     dataNascimento: '',
-    idade: 0,
-    sexo: 'masculino',
+    idade: '',
+    comoNosConheceu: {
+      instagram: false,
+      facebook: false,
+      outro: false,
+      indicacao: '',
+    },
     telefone: '',
+    celular: '',
     email: '',
-    queixaPrincipal: '',
-    historiaDoencaAtual: '',
-    antecedentesPessoais: {
-      hipertensao: false,
-      diabetes: false,
+    avaliacaoMedica: {
+      tratamentoMedico: { sim: false, nao: false, especifique: '' },
+      diabetes: { sim: false, nao: false, especifique: '' },
+      cirurgiaRecente: { sim: false, nao: false, especifique: '' },
+      alergia: { sim: false, nao: false, especifique: '' },
+      problemaPeleCicatrizacao: { sim: false, nao: false, especifique: '' },
+      depressaoPanicoAnsiedade: { sim: false, nao: false, especifique: '' },
+      doencaInfectocontagiosa: { sim: false, nao: false, especifique: '' },
+      historicoConvulsaoEpilepsia: { sim: false, nao: false, especifique: '' },
+    },
+    outrasQuestoesMedicas: {
+      cancer: false,
+      disturbioCirculatorio: false,
+      usoDrogas: false,
+      efeitoAlcool: false,
+      dormiuUltimaNoite: false,
+      emJejum: false,
       cardiopatia: false,
-      outrasDoencas: '',
+      hipertensao: false,
+      hipotensao: false,
+      marcapasso: false,
+      hemofilia: false,
+      hepatite: false,
+      anemia: false,
+      queloid: false,
+      vitiligo: false,
+      gestante: false,
+      amamentando: false,
     },
-    antecedentesFamiliares: '',
-    medicacoesUso: '',
-    alergias: '',
-    habitosVida: {
-      fuma: false,
-      bebe: false,
-      praticaExercicio: false,
+    outroProblema: '',
+    tipoSanguineo: '',
+    declaracoes: {
+      veracidadeInformacoes: false,
+      seguirCuidados: false,
+      permanenciaTatuagem: false,
+      condicoesHigienicas: false,
+    },
+    aceiteTermos: false,
+    procedimento: {
+      local: '',
+      estilo: '',
       observacoes: '',
+      profissional: '',
+      data: '',
+      valor: '',
     },
-    observacoes: '',
   })
 
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -43,31 +80,92 @@ export default function Home() {
     }))
   }
 
-  // Função para atualizar campos aninhados (antecedentes pessoais)
-  const handleAntecedentesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target
+  // Função para atualizar "Como nos conheceu"
+  const handleComoNosConheceuChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, type, checked, value } = e.target
     setFormData(prev => ({
       ...prev,
-      antecedentesPessoais: {
-        ...prev.antecedentesPessoais,
+      comoNosConheceu: {
+        ...prev.comoNosConheceu,
         [name]: type === 'checkbox' ? checked : value,
       },
     }))
   }
 
-  // Função para atualizar hábitos de vida
-  const handleHabitosChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target
+  // Função para atualizar avaliação médica (Sim/Não)
+  const handleAvaliacaoMedicaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, checked } = e.target
+    const campo = name
+    const opcao = value as 'sim' | 'nao'
+    
     setFormData(prev => ({
       ...prev,
-      habitosVida: {
-        ...prev.habitosVida,
-        [name]: type === 'checkbox' ? checked : value,
+      avaliacaoMedica: {
+        ...prev.avaliacaoMedica,
+        [campo]: {
+          ...prev.avaliacaoMedica[campo as keyof typeof prev.avaliacaoMedica],
+          [opcao]: checked,
+          ...(opcao === 'sim' && checked ? { nao: false } : {}),
+          ...(opcao === 'nao' && checked ? { sim: false } : {}),
+        },
       },
     }))
   }
 
-  // Função para calcular idade automaticamente
+  // Função para atualizar especificação da avaliação médica
+  const handleAvaliacaoMedicaEspecifique = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    const campo = name.replace('.especifique', '')
+    
+    setFormData(prev => ({
+      ...prev,
+      avaliacaoMedica: {
+        ...prev.avaliacaoMedica,
+        [campo]: {
+          ...prev.avaliacaoMedica[campo as keyof typeof prev.avaliacaoMedica],
+          especifique: value,
+        },
+      },
+    }))
+  }
+
+  // Função para atualizar outras questões médicas
+  const handleOutrasQuestoesMedicasChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target
+    setFormData(prev => ({
+      ...prev,
+      outrasQuestoesMedicas: {
+        ...prev.outrasQuestoesMedicas,
+        [name]: checked,
+      },
+    }))
+  }
+
+  // Função para atualizar declarações
+  const handleDeclaracoesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target
+    setFormData(prev => ({
+      ...prev,
+      declaracoes: {
+        ...prev.declaracoes,
+        [name]: checked,
+      },
+    }))
+  }
+
+  // Função para atualizar procedimento
+  const handleProcedimentoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      procedimento: {
+        ...prev.procedimento,
+        [name]: value,
+      },
+    }))
+  }
+
+  // Função para calcular idade automaticamente a partir da data de nascimento
   const handleDataNascimentoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const dataNascimento = e.target.value
     if (dataNascimento) {
@@ -81,13 +179,13 @@ export default function Home() {
       setFormData(prev => ({
         ...prev,
         dataNascimento,
-        idade,
+        idade: idade.toString(),
       }))
     } else {
       setFormData(prev => ({
         ...prev,
         dataNascimento: '',
-        idade: 0,
+        idade: '',
       }))
     }
   }
@@ -98,12 +196,28 @@ export default function Home() {
       setMessage({ type: 'error', text: 'Por favor, preencha o nome.' })
       return false
     }
-    if (!formData.dataNascimento) {
-      setMessage({ type: 'error', text: 'Por favor, preencha a data de nascimento.' })
+    if (!formData.cpf.trim()) {
+      setMessage({ type: 'error', text: 'Por favor, preencha o CPF.' })
       return false
     }
-    if (!formData.telefone.trim()) {
-      setMessage({ type: 'error', text: 'Por favor, preencha o telefone.' })
+    if (!formData.telefone.trim() && !formData.celular.trim()) {
+      setMessage({ type: 'error', text: 'Por favor, preencha pelo menos um telefone.' })
+      return false
+    }
+    if (!formData.declaracoes.veracidadeInformacoes) {
+      setMessage({ type: 'error', text: 'É necessário aceitar a declaração de veracidade das informações.' })
+      return false
+    }
+    if (!formData.declaracoes.seguirCuidados) {
+      setMessage({ type: 'error', text: 'É necessário aceitar o compromisso de seguir os cuidados pós-procedimento.' })
+      return false
+    }
+    if (!formData.declaracoes.condicoesHigienicas) {
+      setMessage({ type: 'error', text: 'É necessário aceitar a declaração sobre condições higiênicas.' })
+      return false
+    }
+    if (!formData.aceiteTermos) {
+      setMessage({ type: 'error', text: 'É necessário aceitar os termos e condições para continuar.' })
       return false
     }
     return true
@@ -119,7 +233,6 @@ export default function Home() {
     }
 
     try {
-      // Chamada para a API route do Next.js
       const response = await fetch('/api/anamnese', {
         method: 'POST',
         headers: {
@@ -132,8 +245,6 @@ export default function Home() {
 
       if (response.ok && result.success) {
         setMessage({ type: 'success', text: result.message || 'Ficha de anamnese salva com sucesso!' })
-        // Limpar formulário após sucesso (opcional)
-        // handleReset()
       } else {
         setMessage({ type: 'error', text: result.message || 'Erro ao salvar a ficha. Tente novamente.' })
       }
@@ -147,36 +258,73 @@ export default function Home() {
   const handleReset = () => {
     setFormData({
       nome: '',
+      endereco: '',
+      rg: '',
+      cpf: '',
       dataNascimento: '',
-      idade: 0,
-      sexo: 'masculino',
+      idade: '',
+      comoNosConheceu: {
+        instagram: false,
+        facebook: false,
+        outro: false,
+        indicacao: '',
+      },
       telefone: '',
+      celular: '',
       email: '',
-      queixaPrincipal: '',
-      historiaDoencaAtual: '',
-      antecedentesPessoais: {
-        hipertensao: false,
-        diabetes: false,
+      avaliacaoMedica: {
+        tratamentoMedico: { sim: false, nao: false, especifique: '' },
+        diabetes: { sim: false, nao: false, especifique: '' },
+        cirurgiaRecente: { sim: false, nao: false, especifique: '' },
+        alergia: { sim: false, nao: false, especifique: '' },
+        problemaPeleCicatrizacao: { sim: false, nao: false, especifique: '' },
+        depressaoPanicoAnsiedade: { sim: false, nao: false, especifique: '' },
+        doencaInfectocontagiosa: { sim: false, nao: false, especifique: '' },
+        historicoConvulsaoEpilepsia: { sim: false, nao: false, especifique: '' },
+      },
+      outrasQuestoesMedicas: {
+        cancer: false,
+        disturbioCirculatorio: false,
+        usoDrogas: false,
+        efeitoAlcool: false,
+        dormiuUltimaNoite: false,
+        emJejum: false,
         cardiopatia: false,
-        outrasDoencas: '',
+        hipertensao: false,
+        hipotensao: false,
+        marcapasso: false,
+        hemofilia: false,
+        hepatite: false,
+        anemia: false,
+        queloid: false,
+        vitiligo: false,
+        gestante: false,
+        amamentando: false,
       },
-      antecedentesFamiliares: '',
-      medicacoesUso: '',
-      alergias: '',
-      habitosVida: {
-        fuma: false,
-        bebe: false,
-        praticaExercicio: false,
+      outroProblema: '',
+      tipoSanguineo: '',
+      declaracoes: {
+        veracidadeInformacoes: false,
+        seguirCuidados: false,
+        permanenciaTatuagem: false,
+        condicoesHigienicas: false,
+      },
+      aceiteTermos: false,
+      procedimento: {
+        local: '',
+        estilo: '',
         observacoes: '',
+        profissional: '',
+        data: '',
+        valor: '',
       },
-      observacoes: '',
     })
     setMessage(null)
   }
 
   return (
     <div className="container">
-      <h1>Ficha de Anamnese</h1>
+      <h1>ANAMNESE Tatuagem</h1>
 
       {message && (
         <div className={message.type === 'success' ? 'success-message' : 'error-message'}>
@@ -188,9 +336,9 @@ export default function Home() {
         {/* Dados Pessoais */}
         <div className="form-section">
           <h2>Dados Pessoais</h2>
-          
+
           <div className="form-group">
-            <label htmlFor="nome">Nome Completo *</label>
+            <label htmlFor="nome">Nome *</label>
             <input
               type="text"
               id="nome"
@@ -202,253 +350,891 @@ export default function Home() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="dataNascimento">Data de Nascimento *</label>
-            <input
-              type="date"
-              id="dataNascimento"
-              name="dataNascimento"
-              value={formData.dataNascimento}
-              onChange={handleDataNascimentoChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="idade">Idade</label>
-            <input
-              type="number"
-              id="idade"
-              name="idade"
-              value={formData.idade}
-              readOnly
-              style={{ backgroundColor: '#f5f5f5' }}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="sexo">Sexo</label>
-            <select
-              id="sexo"
-              name="sexo"
-              value={formData.sexo}
-              onChange={handleChange}
-            >
-              <option value="masculino">Masculino</option>
-              <option value="feminino">Feminino</option>
-              <option value="outro">Outro</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="telefone">Telefone *</label>
-            <input
-              type="tel"
-              id="telefone"
-              name="telefone"
-              value={formData.telefone}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="email">E-mail</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-            />
-          </div>
-        </div>
-
-        {/* Queixa Principal */}
-        <div className="form-section">
-          <h2>Queixa Principal</h2>
-          <div className="form-group">
-            <label htmlFor="queixaPrincipal">Descreva a queixa principal</label>
-            <textarea
-              id="queixaPrincipal"
-              name="queixaPrincipal"
-              value={formData.queixaPrincipal}
-              onChange={handleChange}
-              placeholder="Ex: Dor de cabeça há 3 dias..."
-            />
-          </div>
-        </div>
-
-        {/* História da Doença Atual */}
-        <div className="form-section">
-          <h2>História da Doença Atual</h2>
-          <div className="form-group">
-            <label htmlFor="historiaDoencaAtual">Descreva a história da doença atual</label>
-            <textarea
-              id="historiaDoencaAtual"
-              name="historiaDoencaAtual"
-              value={formData.historiaDoencaAtual}
-              onChange={handleChange}
-              placeholder="Descreva como a doença começou, evolução, sintomas..."
-            />
-          </div>
-        </div>
-
-        {/* Antecedentes Pessoais */}
-        <div className="form-section">
-          <h2>Antecedentes Pessoais</h2>
-          
-          <div className="checkbox-group">
-            <input
-              type="checkbox"
-              id="hipertensao"
-              name="hipertensao"
-              checked={formData.antecedentesPessoais.hipertensao}
-              onChange={handleAntecedentesChange}
-            />
-            <label htmlFor="hipertensao">Hipertensão</label>
-          </div>
-
-          <div className="checkbox-group">
-            <input
-              type="checkbox"
-              id="diabetes"
-              name="diabetes"
-              checked={formData.antecedentesPessoais.diabetes}
-              onChange={handleAntecedentesChange}
-            />
-            <label htmlFor="diabetes">Diabetes</label>
-          </div>
-
-          <div className="checkbox-group">
-            <input
-              type="checkbox"
-              id="cardiopatia"
-              name="cardiopatia"
-              checked={formData.antecedentesPessoais.cardiopatia}
-              onChange={handleAntecedentesChange}
-            />
-            <label htmlFor="cardiopatia">Cardiopatia</label>
-          </div>
-
-          <div className="form-group" style={{ marginTop: '15px' }}>
-            <label htmlFor="outrasDoencas">Outras Doenças</label>
+            <label htmlFor="endereco">Endereço</label>
             <input
               type="text"
-              id="outrasDoencas"
-              name="outrasDoencas"
-              value={formData.antecedentesPessoais.outrasDoencas}
-              onChange={handleAntecedentesChange}
-              placeholder="Descreva outras doenças..."
-            />
-          </div>
-        </div>
-
-        {/* Antecedentes Familiares */}
-        <div className="form-section">
-          <h2>Antecedentes Familiares</h2>
-          <div className="form-group">
-            <label htmlFor="antecedentesFamiliares">Descreva os antecedentes familiares</label>
-            <textarea
-              id="antecedentesFamiliares"
-              name="antecedentesFamiliares"
-              value={formData.antecedentesFamiliares}
+              id="endereco"
+              name="endereco"
+              value={formData.endereco}
               onChange={handleChange}
-              placeholder="Doenças na família, histórico médico familiar..."
             />
           </div>
-        </div>
 
-        {/* Medicações em Uso */}
-        <div className="form-section">
-          <h2>Medicações em Uso</h2>
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="rg">RG</label>
+              <input
+                type="text"
+                id="rg"
+                name="rg"
+                value={formData.rg}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="cpf">CPF *</label>
+              <input
+                type="text"
+                id="cpf"
+                name="cpf"
+                value={formData.cpf}
+                onChange={handleChange}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="dataNascimento">Data de Nascimento *</label>
+              <input
+                type="date"
+                id="dataNascimento"
+                name="dataNascimento"
+                value={formData.dataNascimento}
+                onChange={handleDataNascimentoChange}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="idade">Idade</label>
+              <input
+                type="text"
+                id="idade"
+                name="idade"
+                value={formData.idade}
+                readOnly
+                style={{ backgroundColor: '#f7fafc', cursor: 'not-allowed' }}
+              />
+            </div>
+          </div>
+
           <div className="form-group">
-            <label htmlFor="medicacoesUso">Liste as medicações em uso</label>
-            <textarea
-              id="medicacoesUso"
-              name="medicacoesUso"
-              value={formData.medicacoesUso}
-              onChange={handleChange}
-              placeholder="Ex: Losartana 50mg 1x ao dia..."
-            />
+            <label>Como nos conheceu?</label>
+            <div className="checkbox-group">
+              <div>
+                <input
+                  type="checkbox"
+                  id="instagram"
+                  name="instagram"
+                  checked={formData.comoNosConheceu.instagram}
+                  onChange={handleComoNosConheceuChange}
+                />
+                <label htmlFor="instagram">Instagram</label>
+              </div>
+
+              <div>
+                <input
+                  type="checkbox"
+                  id="facebook"
+                  name="facebook"
+                  checked={formData.comoNosConheceu.facebook}
+                  onChange={handleComoNosConheceuChange}
+                />
+                <label htmlFor="facebook">Facebook</label>
+              </div>
+
+              <div>
+                <input
+                  type="checkbox"
+                  id="outro"
+                  name="outro"
+                  checked={formData.comoNosConheceu.outro}
+                  onChange={handleComoNosConheceuChange}
+                />
+                <label htmlFor="outro">Outro</label>
+              </div>
+
+              <label htmlFor="indicacao">
+                Indicação:
+                <input
+                  type="text"
+                  id="indicacao"
+                  name="indicacao"
+                  value={formData.comoNosConheceu.indicacao}
+                  onChange={handleComoNosConheceuChange}
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="telefone">Tel.</label>
+              <input
+                type="tel"
+                id="telefone"
+                name="telefone"
+                value={formData.telefone}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="celular">Cel.</label>
+              <input
+                type="tel"
+                id="celular"
+                name="celular"
+                value={formData.celular}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="email">E-mail</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+              />
+            </div>
           </div>
         </div>
 
-        {/* Alergias */}
+        {/* Avaliação Médica */}
         <div className="form-section">
-          <h2>Alergias</h2>
+          <h2>- Avaliação -</h2>
+
+          {/* Tratamento Médico */}
           <div className="form-group">
-            <label htmlFor="alergias">Descreva alergias conhecidas</label>
-            <textarea
-              id="alergias"
-              name="alergias"
-              value={formData.alergias}
-              onChange={handleChange}
-              placeholder="Ex: Penicilina, dipirona..."
+            <label>ESTÁ EM TRATAMENTO MÉDICO?</label>
+            <div className="radio-group">
+              <div>
+                <input
+                  type="radio"
+                  id="tratamentoMedico.sim"
+                  name="tratamentoMedico"
+                  value="sim"
+                  checked={formData.avaliacaoMedica.tratamentoMedico.sim}
+                  onChange={handleAvaliacaoMedicaChange}
+                />
+                <label htmlFor="tratamentoMedico.sim">Sim</label>
+              </div>
+              <div>
+                <input
+                  type="radio"
+                  id="tratamentoMedico.nao"
+                  name="tratamentoMedico"
+                  value="nao"
+                  checked={formData.avaliacaoMedica.tratamentoMedico.nao}
+                  onChange={handleAvaliacaoMedicaChange}
+                />
+                <label htmlFor="tratamentoMedico.nao">Não</label>
+              </div>
+            </div>
+            <input
+              type="text"
+              placeholder="Especifique:"
+              value={formData.avaliacaoMedica.tratamentoMedico.especifique}
+              onChange={(e) => {
+                const newEvent = { ...e, target: { ...e.target, name: 'tratamentoMedico.especifique' } } as React.ChangeEvent<HTMLInputElement>
+                handleAvaliacaoMedicaEspecifique(newEvent)
+              }}
+              style={{ marginTop: '5px', width: '100%' }}
+            />
+          </div>
+
+          {/* Diabetes */}
+          <div className="form-group">
+            <label>DIABETES?</label>
+            <div className="radio-group">
+              <div>
+                <input
+                  type="radio"
+                  id="diabetes.sim"
+                  name="diabetes"
+                  value="sim"
+                  checked={formData.avaliacaoMedica.diabetes.sim}
+                  onChange={handleAvaliacaoMedicaChange}
+                />
+                <label htmlFor="diabetes.sim">Sim</label>
+              </div>
+              <div>
+                <input
+                  type="radio"
+                  id="diabetes.nao"
+                  name="diabetes"
+                  value="nao"
+                  checked={formData.avaliacaoMedica.diabetes.nao}
+                  onChange={handleAvaliacaoMedicaChange}
+                />
+                <label htmlFor="diabetes.nao">Não</label>
+              </div>
+            </div>
+            <input
+              type="text"
+              placeholder="Especifique:"
+              value={formData.avaliacaoMedica.diabetes.especifique}
+              onChange={(e) => {
+                const newEvent = { ...e, target: { ...e.target, name: 'diabetes.especifique' } } as React.ChangeEvent<HTMLInputElement>
+                handleAvaliacaoMedicaEspecifique(newEvent)
+              }}
+              style={{ marginTop: '5px', width: '100%' }}
+            />
+          </div>
+
+          {/* Cirurgia Recente */}
+          <div className="form-group">
+            <label>CIRURGIA RECENTE?</label>
+            <div className="radio-group">
+              <div>
+                <input
+                  type="radio"
+                  id="cirurgiaRecente.sim"
+                  name="cirurgiaRecente"
+                  value="sim"
+                  checked={formData.avaliacaoMedica.cirurgiaRecente.sim}
+                  onChange={handleAvaliacaoMedicaChange}
+                />
+                <label htmlFor="cirurgiaRecente.sim">Sim</label>
+              </div>
+              <div>
+                <input
+                  type="radio"
+                  id="cirurgiaRecente.nao"
+                  name="cirurgiaRecente"
+                  value="nao"
+                  checked={formData.avaliacaoMedica.cirurgiaRecente.nao}
+                  onChange={handleAvaliacaoMedicaChange}
+                />
+                <label htmlFor="cirurgiaRecente.nao">Não</label>
+              </div>
+            </div>
+            <input
+              type="text"
+              placeholder="Especifique:"
+              value={formData.avaliacaoMedica.cirurgiaRecente.especifique}
+              onChange={(e) => {
+                const newEvent = { ...e, target: { ...e.target, name: 'cirurgiaRecente.especifique' } } as React.ChangeEvent<HTMLInputElement>
+                handleAvaliacaoMedicaEspecifique(newEvent)
+              }}
+              style={{ marginTop: '5px', width: '100%' }}
+            />
+          </div>
+
+          {/* Alergia */}
+          <div className="form-group">
+            <label>ALERGIA?</label>
+            <div className="radio-group">
+              <div>
+                <input
+                  type="radio"
+                  id="alergia.sim"
+                  name="alergia"
+                  value="sim"
+                  checked={formData.avaliacaoMedica.alergia.sim}
+                  onChange={handleAvaliacaoMedicaChange}
+                />
+                <label htmlFor="alergia.sim">Sim</label>
+              </div>
+              <div>
+                <input
+                  type="radio"
+                  id="alergia.nao"
+                  name="alergia"
+                  value="nao"
+                  checked={formData.avaliacaoMedica.alergia.nao}
+                  onChange={handleAvaliacaoMedicaChange}
+                />
+                <label htmlFor="alergia.nao">Não</label>
+              </div>
+            </div>
+            <input
+              type="text"
+              placeholder="Especifique:"
+              value={formData.avaliacaoMedica.alergia.especifique}
+              onChange={(e) => {
+                const newEvent = { ...e, target: { ...e.target, name: 'alergia.especifique' } } as React.ChangeEvent<HTMLInputElement>
+                handleAvaliacaoMedicaEspecifique(newEvent)
+              }}
+              style={{ marginTop: '5px', width: '100%' }}
+            />
+          </div>
+
+          {/* Problema de Pele/Cicatrização */}
+          <div className="form-group">
+            <label>PROBLEMA DE PELE / CICATRIZAÇÃO?</label>
+            <div className="radio-group">
+              <div>
+                <input
+                  type="radio"
+                  id="problemaPeleCicatrizacao.sim"
+                  name="problemaPeleCicatrizacao"
+                  value="sim"
+                  checked={formData.avaliacaoMedica.problemaPeleCicatrizacao.sim}
+                  onChange={handleAvaliacaoMedicaChange}
+                />
+                <label htmlFor="problemaPeleCicatrizacao.sim">Sim</label>
+              </div>
+              <div>
+                <input
+                  type="radio"
+                  id="problemaPeleCicatrizacao.nao"
+                  name="problemaPeleCicatrizacao"
+                  value="nao"
+                  checked={formData.avaliacaoMedica.problemaPeleCicatrizacao.nao}
+                  onChange={handleAvaliacaoMedicaChange}
+                />
+                <label htmlFor="problemaPeleCicatrizacao.nao">Não</label>
+              </div>
+            </div>
+            <input
+              type="text"
+              placeholder="Especifique:"
+              value={formData.avaliacaoMedica.problemaPeleCicatrizacao.especifique}
+              onChange={(e) => {
+                const newEvent = { ...e, target: { ...e.target, name: 'problemaPeleCicatrizacao.especifique' } } as React.ChangeEvent<HTMLInputElement>
+                handleAvaliacaoMedicaEspecifique(newEvent)
+              }}
+              style={{ marginTop: '5px', width: '100%' }}
+            />
+          </div>
+
+          {/* Depressão/Pânico/Ansiedade */}
+          <div className="form-group">
+            <label>DEPRESSÃO / PÂNICO / ANSIEDADE?</label>
+            <div className="radio-group">
+              <div>
+                <input
+                  type="radio"
+                  id="depressaoPanicoAnsiedade.sim"
+                  name="depressaoPanicoAnsiedade"
+                  value="sim"
+                  checked={formData.avaliacaoMedica.depressaoPanicoAnsiedade.sim}
+                  onChange={handleAvaliacaoMedicaChange}
+                />
+                <label htmlFor="depressaoPanicoAnsiedade.sim">Sim</label>
+              </div>
+              <div>
+                <input
+                  type="radio"
+                  id="depressaoPanicoAnsiedade.nao"
+                  name="depressaoPanicoAnsiedade"
+                  value="nao"
+                  checked={formData.avaliacaoMedica.depressaoPanicoAnsiedade.nao}
+                  onChange={handleAvaliacaoMedicaChange}
+                />
+                <label htmlFor="depressaoPanicoAnsiedade.nao">Não</label>
+              </div>
+            </div>
+            <input
+              type="text"
+              placeholder="Especifique:"
+              value={formData.avaliacaoMedica.depressaoPanicoAnsiedade.especifique}
+              onChange={(e) => {
+                const newEvent = { ...e, target: { ...e.target, name: 'depressaoPanicoAnsiedade.especifique' } } as React.ChangeEvent<HTMLInputElement>
+                handleAvaliacaoMedicaEspecifique(newEvent)
+              }}
+              style={{ marginTop: '5px', width: '100%' }}
+            />
+          </div>
+
+          {/* Doença Infectocontagiosa */}
+          <div className="form-group">
+            <label>DOENÇA INFECTOCONTAGIOSA?</label>
+            <div className="radio-group">
+              <div>
+                <input
+                  type="radio"
+                  id="doencaInfectocontagiosa.sim"
+                  name="doencaInfectocontagiosa"
+                  value="sim"
+                  checked={formData.avaliacaoMedica.doencaInfectocontagiosa.sim}
+                  onChange={handleAvaliacaoMedicaChange}
+                />
+                <label htmlFor="doencaInfectocontagiosa.sim">Sim</label>
+              </div>
+              <div>
+                <input
+                  type="radio"
+                  id="doencaInfectocontagiosa.nao"
+                  name="doencaInfectocontagiosa"
+                  value="nao"
+                  checked={formData.avaliacaoMedica.doencaInfectocontagiosa.nao}
+                  onChange={handleAvaliacaoMedicaChange}
+                />
+                <label htmlFor="doencaInfectocontagiosa.nao">Não</label>
+              </div>
+            </div>
+            <input
+              type="text"
+              placeholder="Especifique:"
+              value={formData.avaliacaoMedica.doencaInfectocontagiosa.especifique}
+              onChange={(e) => {
+                const newEvent = { ...e, target: { ...e.target, name: 'doencaInfectocontagiosa.especifique' } } as React.ChangeEvent<HTMLInputElement>
+                handleAvaliacaoMedicaEspecifique(newEvent)
+              }}
+              style={{ marginTop: '5px', width: '100%' }}
+            />
+          </div>
+
+          {/* Histórico de Convulsão/Epilepsia */}
+          <div className="form-group">
+            <label>HISTÓRICO DE CONVULSÃO / EPILEPSIA?</label>
+            <div className="radio-group">
+              <div>
+                <input
+                  type="radio"
+                  id="historicoConvulsaoEpilepsia.sim"
+                  name="historicoConvulsaoEpilepsia"
+                  value="sim"
+                  checked={formData.avaliacaoMedica.historicoConvulsaoEpilepsia.sim}
+                  onChange={handleAvaliacaoMedicaChange}
+                />
+                <label htmlFor="historicoConvulsaoEpilepsia.sim">Sim</label>
+              </div>
+              <div>
+                <input
+                  type="radio"
+                  id="historicoConvulsaoEpilepsia.nao"
+                  name="historicoConvulsaoEpilepsia"
+                  value="nao"
+                  checked={formData.avaliacaoMedica.historicoConvulsaoEpilepsia.nao}
+                  onChange={handleAvaliacaoMedicaChange}
+                />
+                <label htmlFor="historicoConvulsaoEpilepsia.nao">Não</label>
+              </div>
+            </div>
+            <input
+              type="text"
+              placeholder="Especifique:"
+              value={formData.avaliacaoMedica.historicoConvulsaoEpilepsia.especifique}
+              onChange={(e) => {
+                const newEvent = { ...e, target: { ...e.target, name: 'historicoConvulsaoEpilepsia.especifique' } } as React.ChangeEvent<HTMLInputElement>
+                handleAvaliacaoMedicaEspecifique(newEvent)
+              }}
+              style={{ marginTop: '5px', width: '100%' }}
             />
           </div>
         </div>
 
-        {/* Hábitos de Vida */}
+        {/* Outras Questões Médicas */}
         <div className="form-section">
-          <h2>Hábitos de Vida</h2>
-          
-          <div className="checkbox-group">
+          <h2>Outras Questões Médicas</h2>
+          <div className="medical-questions-grid">
+            <div className="checkbox-group">
+              <input
+                type="checkbox"
+                id="cancer"
+                name="cancer"
+                checked={formData.outrasQuestoesMedicas.cancer}
+                onChange={handleOutrasQuestoesMedicasChange}
+              />
+              <label htmlFor="cancer">Algum tipo de câncer?</label>
+            </div>
+            <div className="checkbox-group">
+              <input
+                type="checkbox"
+                id="disturbioCirculatorio"
+                name="disturbioCirculatorio"
+                checked={formData.outrasQuestoesMedicas.disturbioCirculatorio}
+                onChange={handleOutrasQuestoesMedicasChange}
+              />
+              <label htmlFor="disturbioCirculatorio">Distúrbio circulatório?</label>
+            </div>
+            <div className="checkbox-group">
+              <input
+                type="checkbox"
+                id="usoDrogas"
+                name="usoDrogas"
+                checked={formData.outrasQuestoesMedicas.usoDrogas}
+                onChange={handleOutrasQuestoesMedicasChange}
+              />
+              <label htmlFor="usoDrogas">Fez/faz uso de drogas?</label>
+            </div>
+            <div className="checkbox-group">
+              <input
+                type="checkbox"
+                id="efeitoAlcool"
+                name="efeitoAlcool"
+                checked={formData.outrasQuestoesMedicas.efeitoAlcool}
+                onChange={handleOutrasQuestoesMedicasChange}
+              />
+              <label htmlFor="efeitoAlcool">Está sob efeito de álcool?</label>
+            </div>
+            <div className="checkbox-group">
+              <input
+                type="checkbox"
+                id="dormiuUltimaNoite"
+                name="dormiuUltimaNoite"
+                checked={formData.outrasQuestoesMedicas.dormiuUltimaNoite}
+                onChange={handleOutrasQuestoesMedicasChange}
+              />
+              <label htmlFor="dormiuUltimaNoite">Dormiu a última noite?</label>
+            </div>
+            <div className="checkbox-group">
+              <input
+                type="checkbox"
+                id="emJejum"
+                name="emJejum"
+                checked={formData.outrasQuestoesMedicas.emJejum}
+                onChange={handleOutrasQuestoesMedicasChange}
+              />
+              <label htmlFor="emJejum">Está em jejum?</label>
+            </div>
+            <div className="checkbox-group">
+              <input
+                type="checkbox"
+                id="cardiopatia"
+                name="cardiopatia"
+                checked={formData.outrasQuestoesMedicas.cardiopatia}
+                onChange={handleOutrasQuestoesMedicasChange}
+              />
+              <label htmlFor="cardiopatia">Cardiopatia?</label>
+            </div>
+            <div className="checkbox-group">
+              <input
+                type="checkbox"
+                id="hipertensao"
+                name="hipertensao"
+                checked={formData.outrasQuestoesMedicas.hipertensao}
+                onChange={handleOutrasQuestoesMedicasChange}
+              />
+              <label htmlFor="hipertensao">Hipertensão?</label>
+            </div>
+            <div className="checkbox-group">
+              <input
+                type="checkbox"
+                id="hipotensao"
+                name="hipotensao"
+                checked={formData.outrasQuestoesMedicas.hipotensao}
+                onChange={handleOutrasQuestoesMedicasChange}
+              />
+              <label htmlFor="hipotensao">Hipotensão?</label>
+            </div>
+            <div className="checkbox-group">
+              <input
+                type="checkbox"
+                id="marcapasso"
+                name="marcapasso"
+                checked={formData.outrasQuestoesMedicas.marcapasso}
+                onChange={handleOutrasQuestoesMedicasChange}
+              />
+              <label htmlFor="marcapasso">Marcapasso?</label>
+            </div>
+            <div className="checkbox-group">
+              <input
+                type="checkbox"
+                id="hemofilia"
+                name="hemofilia"
+                checked={formData.outrasQuestoesMedicas.hemofilia}
+                onChange={handleOutrasQuestoesMedicasChange}
+              />
+              <label htmlFor="hemofilia">Hemofilia?</label>
+            </div>
+            <div className="checkbox-group">
+              <input
+                type="checkbox"
+                id="hepatite"
+                name="hepatite"
+                checked={formData.outrasQuestoesMedicas.hepatite}
+                onChange={handleOutrasQuestoesMedicasChange}
+              />
+              <label htmlFor="hepatite">Hepatite?</label>
+            </div>
+            <div className="checkbox-group">
+              <input
+                type="checkbox"
+                id="anemia"
+                name="anemia"
+                checked={formData.outrasQuestoesMedicas.anemia}
+                onChange={handleOutrasQuestoesMedicasChange}
+              />
+              <label htmlFor="anemia">Anemia?</label>
+            </div>
+            <div className="checkbox-group">
+              <input
+                type="checkbox"
+                id="queloid"
+                name="queloid"
+                checked={formData.outrasQuestoesMedicas.queloid}
+                onChange={handleOutrasQuestoesMedicasChange}
+              />
+              <label htmlFor="queloid">Quelóide?</label>
+            </div>
+            <div className="checkbox-group">
+              <input
+                type="checkbox"
+                id="vitiligo"
+                name="vitiligo"
+                checked={formData.outrasQuestoesMedicas.vitiligo}
+                onChange={handleOutrasQuestoesMedicasChange}
+              />
+              <label htmlFor="vitiligo">Vitiligo?</label>
+            </div>
+            <div className="checkbox-group">
+              <input
+                type="checkbox"
+                id="gestante"
+                name="gestante"
+                checked={formData.outrasQuestoesMedicas.gestante}
+                onChange={handleOutrasQuestoesMedicasChange}
+              />
+              <label htmlFor="gestante">Gestante?</label>
+            </div>
+            <div className="checkbox-group">
+              <input
+                type="checkbox"
+                id="amamentando"
+                name="amamentando"
+                checked={formData.outrasQuestoesMedicas.amamentando}
+                onChange={handleOutrasQuestoesMedicasChange}
+              />
+              <label htmlFor="amamentando">Amamentando?</label>
+            </div>
+          </div>
+        </div>
+
+        {/* Outro Problema */}
+        <div className="form-section">
+          <h2>ALGUM OUTRO PROBLEMA QUE SEJA NECESSÁRIO NOS INFORMAR?</h2>
+          <div className="form-group">
+            <label htmlFor="outroProblema">Especifique:</label>
+            <input
+              type="text"
+              id="outroProblema"
+              name="outroProblema"
+              value={formData.outroProblema}
+              onChange={handleChange}
+            />
+          </div>
+        </div>
+
+        {/* Tipo Sanguíneo */}
+        <div className="form-section">
+          <h2>TIPO SANGUÍNEO E FATOR RH:</h2>
+          <div className="blood-type-grid">
+            <div className="radio-group">
+              <input
+                type="radio"
+                id="tipoSanguineo-O-"
+                name="tipoSanguineo"
+                value="O-"
+                checked={formData.tipoSanguineo === 'O-'}
+                onChange={handleChange}
+              />
+              <label htmlFor="tipoSanguineo-O-">O-</label>
+            </div>
+            <div className="radio-group">
+              <input
+                type="radio"
+                id="tipoSanguineo-O+"
+                name="tipoSanguineo"
+                value="O+"
+                checked={formData.tipoSanguineo === 'O+'}
+                onChange={handleChange}
+              />
+              <label htmlFor="tipoSanguineo-O+">O+</label>
+            </div>
+            <div className="radio-group">
+              <input
+                type="radio"
+                id="tipoSanguineo-A-"
+                name="tipoSanguineo"
+                value="A-"
+                checked={formData.tipoSanguineo === 'A-'}
+                onChange={handleChange}
+              />
+              <label htmlFor="tipoSanguineo-A-">A-</label>
+            </div>
+            <div className="radio-group">
+              <input
+                type="radio"
+                id="tipoSanguineo-A+"
+                name="tipoSanguineo"
+                value="A+"
+                checked={formData.tipoSanguineo === 'A+'}
+                onChange={handleChange}
+              />
+              <label htmlFor="tipoSanguineo-A+">A+</label>
+            </div>
+            <div className="radio-group">
+              <input
+                type="radio"
+                id="tipoSanguineo-B-"
+                name="tipoSanguineo"
+                value="B-"
+                checked={formData.tipoSanguineo === 'B-'}
+                onChange={handleChange}
+              />
+              <label htmlFor="tipoSanguineo-B-">B-</label>
+            </div>
+            <div className="radio-group">
+              <input
+                type="radio"
+                id="tipoSanguineo-B+"
+                name="tipoSanguineo"
+                value="B+"
+                checked={formData.tipoSanguineo === 'B+'}
+                onChange={handleChange}
+              />
+              <label htmlFor="tipoSanguineo-B+">B+</label>
+            </div>
+            <div className="radio-group">
+              <input
+                type="radio"
+                id="tipoSanguineo-AB-"
+                name="tipoSanguineo"
+                value="AB-"
+                checked={formData.tipoSanguineo === 'AB-'}
+                onChange={handleChange}
+              />
+              <label htmlFor="tipoSanguineo-AB-">AB-</label>
+            </div>
+            <div className="radio-group">
+              <input
+                type="radio"
+                id="tipoSanguineo-AB+"
+                name="tipoSanguineo"
+                value="AB+"
+                checked={formData.tipoSanguineo === 'AB+'}
+                onChange={handleChange}
+              />
+              <label htmlFor="tipoSanguineo-AB+">AB+</label>
+            </div>
+          </div>
+        </div>
+
+        {/* Declarações */}
+        <div className="form-section">
+          <h2>Declarações</h2>
+          <div className="declaracoes-group">
+            <div className="checkbox-group">
+              <input
+                type="checkbox"
+                id="veracidadeInformacoes"
+                name="veracidadeInformacoes"
+                checked={formData.declaracoes.veracidadeInformacoes}
+                onChange={handleDeclaracoesChange}
+                required
+              />
+              <label htmlFor="veracidadeInformacoes">
+                Declaro que as informações fornecidas são verdadeiras e eximo o profissional de qualquer responsabilidade por omissões.
+              </label>
+            </div>
+            <div className="checkbox-group">
+              <input
+                type="checkbox"
+                id="seguirCuidados"
+                name="seguirCuidados"
+                checked={formData.declaracoes.seguirCuidados}
+                onChange={handleDeclaracoesChange}
+                required
+              />
+              <label htmlFor="seguirCuidados">
+                Comprometo-me a seguir os cuidados pós-procedimento conforme orientações.
+              </label>
+            </div>
+            <div className="checkbox-group">
+              <input
+                type="checkbox"
+                id="permanenciaTatuagem"
+                name="permanenciaTatuagem"
+                checked={formData.declaracoes.permanenciaTatuagem}
+                onChange={handleDeclaracoesChange}
+              />
+              <label htmlFor="permanenciaTatuagem">
+                Estou ciente de que a tatuagem é permanente e que a remoção completa não é garantida, mesmo com tecnologia avançada.
+              </label>
+            </div>
+            <div className="checkbox-group">
+              <input
+                type="checkbox"
+                id="condicoesHigienicas"
+                name="condicoesHigienicas"
+                checked={formData.declaracoes.condicoesHigienicas}
+                onChange={handleDeclaracoesChange}
+                required
+              />
+              <label htmlFor="condicoesHigienicas">
+                Estou ciente de que o procedimento será realizado em condições seguras e higiênicas, utilizando instrumentos esterilizados e/ou descartáveis.
+              </label>
+            </div>
+          </div>
+          <div className="checkbox-group" style={{ marginTop: '20px', padding: '16px', background: '#f7fafc', borderRadius: '8px', border: '2px solid #e2e8f0' }}>
             <input
               type="checkbox"
-              id="fuma"
-              name="fuma"
-              checked={formData.habitosVida.fuma}
-              onChange={handleHabitosChange}
+              id="aceiteTermos"
+              name="aceiteTermos"
+              checked={formData.aceiteTermos}
+              onChange={(e) => setFormData(prev => ({ ...prev, aceiteTermos: e.target.checked }))}
+              required
             />
-            <label htmlFor="fuma">Fuma</label>
-          </div>
-
-          <div className="checkbox-group">
-            <input
-              type="checkbox"
-              id="bebe"
-              name="bebe"
-              checked={formData.habitosVida.bebe}
-              onChange={handleHabitosChange}
-            />
-            <label htmlFor="bebe">Consome bebidas alcoólicas</label>
-          </div>
-
-          <div className="checkbox-group">
-            <input
-              type="checkbox"
-              id="praticaExercicio"
-              name="praticaExercicio"
-              checked={formData.habitosVida.praticaExercicio}
-              onChange={handleHabitosChange}
-            />
-            <label htmlFor="praticaExercicio">Pratica exercícios físicos</label>
-          </div>
-
-          <div className="form-group" style={{ marginTop: '15px' }}>
-            <label htmlFor="observacoesHabitos">Observações sobre hábitos</label>
-            <textarea
-              id="observacoesHabitos"
-              name="observacoes"
-              value={formData.habitosVida.observacoes}
-              onChange={handleHabitosChange}
-              placeholder="Observações adicionais sobre hábitos de vida..."
-            />
+            <label htmlFor="aceiteTermos" style={{ fontWeight: '600', color: '#2d3748' }}>
+              Aceito os termos e condições descritos acima e confirmo que todas as informações fornecidas são verdadeiras.
+            </label>
           </div>
         </div>
 
-        {/* Observações Adicionais */}
+        {/* Detalhes do Procedimento */}
         <div className="form-section">
-          <h2>Observações Adicionais</h2>
+          <h2>- Tatuagem -</h2>
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="local">Local:</label>
+              <input
+                type="text"
+                id="local"
+                name="local"
+                value={formData.procedimento.local}
+                onChange={handleProcedimentoChange}
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="estilo">Estilo:</label>
+              <input
+                type="text"
+                id="estilo"
+                name="estilo"
+                value={formData.procedimento.estilo}
+                onChange={handleProcedimentoChange}
+              />
+            </div>
+          </div>
           <div className="form-group">
-            <label htmlFor="observacoes">Observações gerais</label>
+            <label htmlFor="observacoes">Obs.:</label>
             <textarea
               id="observacoes"
               name="observacoes"
-              value={formData.observacoes}
-              onChange={handleChange}
-              placeholder="Qualquer informação adicional relevante..."
+              value={formData.procedimento.observacoes}
+              onChange={handleProcedimentoChange}
             />
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="profissional">Profissional:</label>
+              <input
+                type="text"
+                id="profissional"
+                name="profissional"
+                value={formData.procedimento.profissional}
+                onChange={handleProcedimentoChange}
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="data">Data:</label>
+              <input
+                type="date"
+                id="data"
+                name="data"
+                value={formData.procedimento.data}
+                onChange={handleProcedimentoChange}
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="valor">Valor:</label>
+              <input
+                type="text"
+                id="valor"
+                name="valor"
+                value={formData.procedimento.valor}
+                onChange={handleProcedimentoChange}
+                placeholder="R$ 0,00"
+              />
+            </div>
           </div>
         </div>
 
