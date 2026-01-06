@@ -324,7 +324,7 @@ export default function Home() {
 
   return (
     <div className="container">
-      <h1>ANAMNESE Tatuagem</h1>
+      <h1>ANAMNESE TATUAGEM</h1>
 
       {message && (
         <div className={message.type === 'success' ? 'success-message' : 'error-message'}>
@@ -335,10 +335,10 @@ export default function Home() {
       <form onSubmit={handleSubmit}>
         {/* Dados Pessoais */}
         <div className="form-section">
-          <h2>Dados Pessoais</h2>
+          <h2>DADOS PESSOAIS</h2>
 
           <div className="form-group">
-            <label htmlFor="nome">Nome *</label>
+            <label htmlFor="nome">Nome <span style={{ color: 'red' }}>*</span></label>
             <input
               type="text"
               id="nome"
@@ -373,7 +373,7 @@ export default function Home() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="cpf">CPF *</label>
+              <label htmlFor="cpf">CPF <span style={{ color: 'red' }}>*</span></label>
               <input
                 type="text"
                 id="cpf"
@@ -385,7 +385,7 @@ export default function Home() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="dataNascimento">Data de Nascimento *</label>
+              <label htmlFor="dataNascimento">Data de Nascimento <span style={{ color: 'red' }}>*</span></label>
               <input
                 type="date"
                 id="dataNascimento"
@@ -482,7 +482,7 @@ export default function Home() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="email">E-mail</label>
+              <label htmlFor="email">E-mail <span style={{ color: 'red' }}>*</span></label>
               <input
                 type="email"
                 id="email"
@@ -496,7 +496,7 @@ export default function Home() {
 
         {/* Avaliação Médica */}
         <div className="form-section">
-          <h2>- Avaliação -</h2>
+          <h2>- AVALIAÇÃO -</h2>
 
           {/* Tratamento Médico */}
           <div className="form-group">
@@ -813,7 +813,7 @@ export default function Home() {
 
         {/* Outras Questões Médicas */}
         <div className="form-section">
-          <h2>Outras Questões Médicas</h2>
+          <h2>OUTRAS QUESTÕES MÉDICAS</h2>
           <div className="medical-questions-grid">
             <div className="checkbox-group">
               <input
@@ -1100,7 +1100,7 @@ export default function Home() {
 
         {/* Declarações */}
         <div className="form-section">
-          <h2>Declarações</h2>
+          <h2>DECLARAÇÕES</h2>
           <div className="declaracoes-group">
             <div className="checkbox-group">
               <input
@@ -1169,74 +1169,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Detalhes do Procedimento */}
-        <div className="form-section">
-          <h2>- Tatuagem -</h2>
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="local">Local:</label>
-              <input
-                type="text"
-                id="local"
-                name="local"
-                value={formData.procedimento.local}
-                onChange={handleProcedimentoChange}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="estilo">Estilo:</label>
-              <input
-                type="text"
-                id="estilo"
-                name="estilo"
-                value={formData.procedimento.estilo}
-                onChange={handleProcedimentoChange}
-              />
-            </div>
-          </div>
-          <div className="form-group">
-            <label htmlFor="observacoes">Obs.:</label>
-            <textarea
-              id="observacoes"
-              name="observacoes"
-              value={formData.procedimento.observacoes}
-              onChange={handleProcedimentoChange}
-            />
-          </div>
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="profissional">Profissional:</label>
-              <input
-                type="text"
-                id="profissional"
-                name="profissional"
-                value={formData.procedimento.profissional}
-                onChange={handleProcedimentoChange}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="data">Data:</label>
-              <input
-                type="date"
-                id="data"
-                name="data"
-                value={formData.procedimento.data}
-                onChange={handleProcedimentoChange}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="valor">Valor:</label>
-              <input
-                type="text"
-                id="valor"
-                name="valor"
-                value={formData.procedimento.valor}
-                onChange={handleProcedimentoChange}
-                placeholder="R$ 0,00"
-              />
-            </div>
-          </div>
-        </div>
 
         {/* Botões */}
         <div className="button-group">

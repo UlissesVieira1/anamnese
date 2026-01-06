@@ -8,10 +8,10 @@ html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: 'Raleway', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #8B6F47;
   min-height: 100vh;
 }
 
@@ -36,8 +36,10 @@ h1 {
   margin-bottom: 40px;
   text-align: center;
   font-size: 2.5rem;
-  font-weight: 700;
+  font-weight: 600;
+  font-style: italic;
   letter-spacing: -0.5px;
+  font-family: 'Raleway', sans-serif;
 }
 
 .form-section {
@@ -58,6 +60,7 @@ h1 {
   font-size: 1.5rem;
   font-weight: 600;
   letter-spacing: -0.3px;
+  font-family: 'Raleway', sans-serif;
 }
 
 .form-group {
@@ -82,7 +85,7 @@ h1 {
 .form-group select {
   width: 100%;
   padding: 14px 16px;
-  border: 2px solid #e2e8f0;
+  border: 2px solid #0000003f;
   border-radius: 8px;
   font-size: 15px;
   font-family: inherit;
@@ -95,14 +98,14 @@ h1 {
 .form-group textarea:focus,
 .form-group select:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #8B6F47;
+  box-shadow: 0 0 0 3px rgba(139, 111, 71, 0.15);
 }
 
 .form-group input:hover,
 .form-group textarea:hover,
 .form-group select:hover {
-  border-color: #cbd5e0;
+  border-color: #8B6F47;
 }
 
 .form-group textarea {
@@ -141,7 +144,7 @@ h1 {
   width: 20px;
   height: 20px;
   cursor: pointer;
-  accent-color: #667eea;
+  accent-color: #8B6F47;
   flex-shrink: 0;
 }
 
@@ -173,7 +176,7 @@ h1 {
   width: 20px;
   height: 20px;
   cursor: pointer;
-  accent-color: #667eea;
+  accent-color: #8B6F47;
   flex-shrink: 0;
 }
 
@@ -278,14 +281,15 @@ h1 {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #8B6F47 0%, #6B5438 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(139, 111, 71, 0.4);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(139, 111, 71, 0.5);
+  background: linear-gradient(135deg, #9B7F57 0%, #7B6448 100%);
 }
 
 .btn-primary:active {
