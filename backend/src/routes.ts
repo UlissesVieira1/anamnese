@@ -75,6 +75,16 @@ router.post('/inserirDadosAnamnese', async (req: Request, res: Response) => { //
         const dadosBanco = mapearDadosParaBanco(dadosFormulario);
 
         const fichaAnamnese = new FichaAnamnese(); // instancia o modelo (a tabela já está definida no constructor)
+        const cliente = await fichaAnamnese.buscarClientePorCpf(dadosFormulario.cpf);
+
+        // Verifica se o cliente já preencheu a ficha de anamnese
+        if (cliente) {
+            // Retorna erro se o cliente já preencheu a ficha de anamnese
+            return res.status(400).json({
+                success: false,
+                message: 'Já existe uma ficha de anamnese preenchida para este CPF'
+            });
+        } 
 
         // Insere os dados mapeados no banco
         await fichaAnamnese.insert(dadosBanco);
@@ -92,9 +102,16 @@ router.post('/inserirDadosAnamnese', async (req: Request, res: Response) => { //
     }
 });
 
-router.get('/', async (req: Request, res: Response) => {
+router.get('/consultarCliente', async (req: Request, res: Response) => {
     try {
-        console.log('testeeee');
+        const fichaAnamnese = new FichaAnamnese(); // instancia o modelo (a tabela já está definida no constructor)
+
+       const cliente = await fichaAnamnese.buscarClientePorCpf(req.query.cpf as string);
+       return res.json({
+        success: true,
+        message: 'Cliente encontrado com sucesso!',
+        data: cliente
+    });
     } catch (error) {
         console.error('Erro ao buscar anamneses:', error);
         return res.status(500).json({

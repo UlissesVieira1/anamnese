@@ -70,6 +70,15 @@ export default class Model {
     return resultado.length > 0 ? resultado[0] : null;
   }
 
+
+  async buscarClientePorCpf(cpf: number | string): Promise<any | null> {
+    const [rows] = await db.query(
+      `SELECT * FROM ${this.tabela} WHERE cpf = ?`, [cpf]);
+
+    const resultado = rows as any[];
+    return resultado.length > 0 ? resultado[0] : null;
+  }
+
   /**
    * Atualiza registros na tabela
    * @param dados Objeto com os campos e valores a serem atualizados

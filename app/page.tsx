@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { AnamneseTipagem } from '@/types/anamnese'
 import './globals.css'
 import { log } from 'console'
@@ -72,6 +72,16 @@ export default function Home() {
 
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
+  // Auto-fecha o toast após 5 segundos
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => {
+        setMessage(null)
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [message])
+
   // Função para atualizar campos simples
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -98,7 +108,7 @@ export default function Home() {
     const { name, value, checked } = e.target
     const campo = name
     const opcao = value as 'sim' | 'nao'
-    
+
     setFormData(prev => ({
       ...prev,
       avaliacaoMedica: {
@@ -117,7 +127,7 @@ export default function Home() {
   const handleAvaliacaoMedicaEspecifique = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     const campo = name.replace('.especifique', '')
-    
+
     setFormData(prev => ({
       ...prev,
       avaliacaoMedica: {
@@ -230,12 +240,12 @@ export default function Home() {
     e.preventDefault()
     setMessage(null)
 
-    if (!validateForm()) {      
+    if (!validateForm()) {
       return
     }
 
     try {
-      
+
       // Chama o backend Express na porta 3001
       const response = await fetch('http://localhost:3001/inserirDadosAnamnese', {
         method: 'POST',
@@ -246,7 +256,7 @@ export default function Home() {
       })
 
       console.log(response);
-      
+
 
       const result = await response.json()
 
@@ -333,11 +343,7 @@ export default function Home() {
     <div className="container">
       <h1>ANAMNESE TATUAGEM</h1>
 
-      {message && (
-        <div className={message.type === 'success' ? 'success-message' : 'error-message'}>
-          {message.text}
-        </div>
-      )}
+
 
       <form onSubmit={handleSubmit}>
         {/* Dados Pessoais */}
@@ -1187,6 +1193,40 @@ export default function Home() {
           </button>
         </div>
       </form>
+      {/* Toast Notification */}
+      {message && (
+        <div className={`toast toast-${message.type} ${message ? 'toast-show' : ''}`}>
+          <div className="toast-content">
+            <div className="toast-icon">
+              {message.type === 'success' ? (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor"/>
+                </svg>
+              ) : (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" fill="currentColor"/>
+                </svg>
+              )}
+            </div>
+            <div className="toast-message">
+              <strong>{message.type === 'success' ? 'Sucesso!' : 'Erro!'}</strong>
+              <p>{message.text}</p>
+            </div>
+            <button 
+              className="toast-close" 
+              onClick={() => setMessage(null)}
+              aria-label="Fechar notificação"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" fill="currentColor"/>
+              </svg>
+            </button>
+          </div>
+          <div className="toast-progress">
+            <div className="toast-progress-bar"></div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
