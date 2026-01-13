@@ -71,9 +71,21 @@ export default class Model {
   }
 
 
+  /**
+   * Normaliza o CPF removendo pontos e traços
+   * @param cpf CPF formatado ou não
+   * @returns CPF apenas com números
+   */
+  private normalizarCpf(cpf: number | string): string {
+    if (!cpf) return '';
+    return String(cpf).replace(/[.\-]/g, '');
+  }
+
   async buscarClientePorCpf(cpf: number | string): Promise<any | null> {
+    // Normaliza o CPF antes de buscar no banco
+    const cpfNormalizado = this.normalizarCpf(cpf);
     const [rows] = await db.query(
-      `SELECT * FROM ${this.tabela} WHERE cpf = ?`, [cpf]);
+      `SELECT * FROM ${this.tabela} WHERE cpf = ?`, [cpfNormalizado]);
 
     const resultado = rows as any[];
     return resultado.length > 0 ? resultado[0] : null;

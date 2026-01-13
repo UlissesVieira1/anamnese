@@ -5,6 +5,16 @@ import { AnamneseTipagem } from './types/anamnese';
 const router = Router(); // instancia o router
 
 /**
+ * Normaliza o CPF removendo pontos e traços
+ * @param cpf CPF formatado ou não
+ * @returns CPF apenas com números
+ */
+function normalizarCpf(cpf: string): string {
+    if (!cpf) return '';
+    return cpf.replace(/[.\-]/g, '');
+}
+
+/**
  * Mapeia os dados do formulário para a estrutura do banco de dados
  * @param dadosFormulario Dados recebidos do frontend
  * @returns Dados formatados para inserção no banco
@@ -49,7 +59,7 @@ function mapearDadosParaBanco(dadosFormulario: AnamneseTipagem) {
     // Retorna dados formatados para a estrutura do banco
     return {
         nome: dadosFormulario.nome,
-        cpf: dadosFormulario.cpf,
+        cpf: normalizarCpf(dadosFormulario.cpf), // Normaliza CPF removendo pontos e traços
         dados_cliente: dadosCliente,
         avaliacao: avaliacao,
         termos: termos,
@@ -71,11 +81,14 @@ router.post('/inserirDadosAnamnese', async (req: Request, res: Response) => { //
             });
         }
 
+        // Normaliza o CPF antes de validar e salvar
+        const cpfNormalizado = normalizarCpf(dadosFormulario.cpf);
+
         // Mapeia os dados do formulário para a estrutura do banco
         const dadosBanco = mapearDadosParaBanco(dadosFormulario);
 
         const fichaAnamnese = new FichaAnamnese(); // instancia o modelo (a tabela já está definida no constructor)
-        const cliente = await fichaAnamnese.buscarClientePorCpf(dadosFormulario.cpf);
+        const cliente = await fichaAnamnese.buscarClientePorCpf(cpfNormalizado);
 
         // Verifica se o cliente já preencheu a ficha de anamnese
         if (cliente) {
@@ -106,7 +119,9 @@ router.get('/consultarCliente', async (req: Request, res: Response) => {
     try {
         const fichaAnamnese = new FichaAnamnese(); // instancia o modelo (a tabela já está definida no constructor)
 
-       const cliente = await fichaAnamnese.buscarClientePorCpf(req.query.cpf as string);
+        // Normaliza o CPF antes de buscar
+        const cpfNormalizado = normalizarCpf(req.query.cpf as string);
+       const cliente = await fichaAnamnese.buscarClientePorCpf(cpfNormalizado);
        return res.json({
         success: true,
         message: 'Cliente encontrado com sucesso!',
