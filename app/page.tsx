@@ -227,6 +227,10 @@ export default function Home() {
       setMessage({ type: 'error', text: 'É necessário aceitar a declaração sobre condições higiênicas.' })
       return false
     }
+    if (!formData.declaracoes.permanenciaTatuagem) {
+      setMessage({ type: 'error', text: 'É necessário aceitar a declaração sobre a permanência da tatuagem.' })
+      return false
+    }
     if (!formData.aceiteTermos) {
       setMessage({ type: 'error', text: 'É necessário aceitar os termos e condições para continuar.' })
       return false
@@ -484,7 +488,7 @@ export default function Home() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="celular">Cel.</label>
+              <label htmlFor="celular">Cel. <span style={{ color: 'red' }}>*</span></label>
               <input
                 type="tel"
                 id="celular"
@@ -1148,6 +1152,7 @@ export default function Home() {
                 name="permanenciaTatuagem"
                 checked={formData.declaracoes.permanenciaTatuagem}
                 onChange={handleDeclaracoesChange}
+                required
               />
               <label htmlFor="permanenciaTatuagem">
                 Estou ciente de que a tatuagem é permanente e que a remoção completa não é garantida, mesmo com tecnologia avançada.
