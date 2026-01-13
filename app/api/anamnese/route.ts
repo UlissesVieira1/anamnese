@@ -2,13 +2,13 @@
 // Este arquivo será usado quando você criar o backend
 
 import { NextRequest, NextResponse } from 'next/server'
-import { Anamnese } from '@/types/anamnese'
+import { AnamneseTipagem } from '@/types/anamnese'
 
 // Esta é uma rota POST para salvar a anamnese
 export async function POST(request: NextRequest) {
   try {
     // Recebe os dados do formulário
-    const data: Anamnese = await request.json()
+    const data: AnamneseTipagem = await request.json()
 
     // Aqui você faria a conexão com o banco de dados
     // Exemplo com Prisma (quando instalar):

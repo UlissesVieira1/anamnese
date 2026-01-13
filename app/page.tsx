@@ -246,8 +246,8 @@ export default function Home() {
 
     try {
 
-      // Chama o backend Express na porta 3001
-      const response = await fetch('http://localhost:3001/inserirDadosAnamnese', {
+      // Chama a API Route do Next.js
+      const response = await fetch('/api/inserirDadosAnamnese', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
