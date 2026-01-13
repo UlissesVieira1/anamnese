@@ -355,7 +355,7 @@ export default function Home() {
           <h2>DADOS PESSOAIS</h2>
 
           <div className="form-group">
-            <label htmlFor="nome">Nome <span style={{ color: 'red' }}>*</span></label>
+            <label htmlFor="nome">Nome <span style={{ color: 'red', fontSize: '1.3em', fontWeight: 'bold', verticalAlign: 'middle', display: 'inline-block', lineHeight: '1' }}>*</span></label>
             <input
               type="text"
               id="nome"
@@ -390,7 +390,7 @@ export default function Home() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="cpf">CPF <span style={{ color: 'red' }}>*</span></label>
+              <label htmlFor="cpf">CPF <span style={{ color: 'red', fontSize: '1.3em', fontWeight: 'bold', verticalAlign: 'middle', display: 'inline-block', lineHeight: '1' }}>*</span></label>
               <input
                 type="text"
                 id="cpf"
@@ -402,7 +402,7 @@ export default function Home() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="dataNascimento">Data de Nascimento <span style={{ color: 'red' }}>*</span></label>
+              <label htmlFor="dataNascimento">Data de Nascimento <span style={{ color: 'red', fontSize: '1.3em', fontWeight: 'bold', verticalAlign: 'middle', display: 'inline-block', lineHeight: '1' }}>*</span></label>
               <input
                 type="date"
                 id="dataNascimento"
@@ -488,7 +488,7 @@ export default function Home() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="celular">Cel. <span style={{ color: 'red' }}>*</span></label>
+              <label htmlFor="celular">Cel. <span style={{ color: 'red', fontSize: '1.3em', fontWeight: 'bold', verticalAlign: 'middle', display: 'inline-block', lineHeight: '1' }}>*</span></label>
               <input
                 type="tel"
                 id="celular"
@@ -499,7 +499,7 @@ export default function Home() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="email">E-mail <span style={{ color: 'red' }}>*</span></label>
+              <label htmlFor="email">E-mail <span style={{ color: 'red', fontSize: '1.3em', fontWeight: 'bold', verticalAlign: 'middle', display: 'inline-block', lineHeight: '1' }}>*</span></label>
               <input
                 type="email"
                 id="email"

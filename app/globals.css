@@ -226,7 +226,9 @@ h1 {
   border-radius: 8px;
   border: 1px solid #e2e8f0;
   justify-content: center;
+  align-items: center;
   transition: all 0.2s ease;
+  flex-direction: row;
 }
 
 .blood-type-grid .radio-group:hover {
@@ -236,6 +238,12 @@ h1 {
 
 .blood-type-grid .radio-group input[type="radio"] {
   margin: 0;
+  flex-shrink: 0;
+}
+
+.blood-type-grid .radio-group label {
+  margin: 0;
+  white-space: nowrap;
 }
 
 /* Declarações */
@@ -552,6 +560,53 @@ h1 {
     width: 100%;
   }
 
+  /* Exceção: checkbox-group dentro de medical-questions-grid mantém row */
+  .medical-questions-grid .checkbox-group {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px;
+  }
+
+  .medical-questions-grid .checkbox-group > * {
+    width: auto;
+  }
+
+  .medical-questions-grid .checkbox-group input[type="checkbox"] {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+  }
+
+  .medical-questions-grid .checkbox-group label {
+    margin: 0;
+    width: auto;
+  }
+
+  /* Exceção: checkbox de aceiteTermos mantém row */
+  #aceiteTermos {
+    flex-shrink: 0 !important;
+    width: 20px !important;
+    height: 20px !important;
+    margin-top: 2px;
+  }
+
+  label[for="aceiteTermos"] {
+    margin: 0 !important;
+    flex: 1;
+    width: auto !important;
+  }
+
+  /* Container do aceiteTermos - usando seletor mais específico */
+  .form-section > .checkbox-group:last-of-type {
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    gap: 8px;
+  }
+
+  .form-section > .checkbox-group:last-of-type > * {
+    width: auto !important;
+  }
+
   .checkbox-group label[for="indicacao"] {
     margin-left: 0;
     padding-left: 0;
@@ -574,12 +629,83 @@ h1 {
     gap: 12px;
   }
 
+  /* Exceção: radio-group dentro de blood-type-grid mantém row */
+  .blood-type-grid .radio-group {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: left !important;
+    gap: 8px;
+  }
+
   .medical-questions-grid {
     grid-template-columns: 1fr;
   }
 
+  /* Exceção: checkbox-group dentro de medical-questions-grid mantém row */
+  .medical-questions-grid .checkbox-group {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px;
+  }
+
+  .medical-questions-grid .checkbox-group > * {
+    width: auto !important;
+  }
+
+  .medical-questions-grid .checkbox-group input[type="checkbox"] {
+    flex-shrink: 0 !important;
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .medical-questions-grid .checkbox-group label {
+    margin: 0 !important;
+    width: auto !important;
+  }
+
+  /* Exceção: checkbox de aceiteTermos mantém row */
+  #aceiteTermos {
+    flex-shrink: 0 !important;
+    width: 20px !important;
+    height: 20px !important;
+    margin-top: 2px;
+  }
+
+  label[for="aceiteTermos"] {
+    margin: 0 !important;
+    flex: 1;
+    width: auto !important;
+  }
+
+  /* Container do aceiteTermos - último checkbox-group da form-section */
+  .form-section > .checkbox-group:last-of-type {
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    gap: 8px;
+  }
+
+  .form-section > .checkbox-group:last-of-type > * {
+    width: auto !important;
+  }
+
   .blood-type-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .blood-type-grid .radio-group {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .blood-type-grid .radio-group input[type="radio"] {
+    flex-shrink: 0;
+  }
+
+  .blood-type-grid .radio-group label {
+    margin: 0;
+    white-space: nowrap;
   }
 
   .button-group {
@@ -594,6 +720,19 @@ h1 {
 
   .declaracoes-group .checkbox-group {
     padding: 12px;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    gap: 8px;
+  }
+
+  .declaracoes-group .checkbox-group input[type="checkbox"] {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .declaracoes-group .checkbox-group label {
+    margin: 0;
+    flex: 1;
   }
 }
 
@@ -612,5 +751,76 @@ h1 {
 
   .blood-type-grid {
     grid-template-columns: 1fr;
+  }
+
+  .blood-type-grid .radio-group {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Exceção: checkbox-group dentro de medical-questions-grid mantém row */
+  .medical-questions-grid .checkbox-group {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px;
+  }
+
+  .medical-questions-grid .checkbox-group > * {
+    width: auto !important;
+  }
+
+  .medical-questions-grid .checkbox-group input[type="checkbox"] {
+    flex-shrink: 0 !important;
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .medical-questions-grid .checkbox-group label {
+    margin: 0 !important;
+    width: auto !important;
+  }
+
+  /* Exceção: checkbox de aceiteTermos mantém row */
+  #aceiteTermos {
+    flex-shrink: 0 !important;
+    width: 20px !important;
+    height: 20px !important;
+    margin-top: 2px;
+  }
+
+  label[for="aceiteTermos"] {
+    margin: 0 !important;
+    flex: 1;
+    width: auto !important;
+  }
+
+  /* Container do aceiteTermos */
+  .form-section > .checkbox-group:last-of-type {
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    gap: 8px;
+  }
+
+  .form-section > .checkbox-group:last-of-type > * {
+    width: auto !important;
+  }
+
+  /* Exceção: checkbox-group dentro de declaracoes-group mantém row */
+  .declaracoes-group .checkbox-group {
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    gap: 8px;
+  }
+
+  .declaracoes-group .checkbox-group input[type="checkbox"] {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .declaracoes-group .checkbox-group label {
+    margin: 0;
+    flex: 1;
   }
 }
