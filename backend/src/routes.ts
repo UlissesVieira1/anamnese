@@ -11,7 +11,10 @@ const router = Router(); // instancia o router
  */
 function normalizarCpf(cpf: string): string {
     if (!cpf) return '';
-    return cpf.replace(/[.\-]/g, '');
+    // Remove todos os caracteres não numéricos (pontos, traços, espaços, etc)
+    const cpfNormalizado = String(cpf).replace(/\D/g, '');
+    console.log(`[DEBUG] CPF normalizado: "${cpf}" -> "${cpfNormalizado}"`);
+    return cpfNormalizado;
 }
 
 /**
@@ -83,6 +86,9 @@ router.post('/inserirDadosAnamnese', async (req: Request, res: Response) => { //
 
         // Normaliza o CPF antes de validar e salvar
         const cpfNormalizado = normalizarCpf(dadosFormulario.cpf);
+
+        console.log(`[DEBUG] CPF normalizado: "${cpfNormalizado}"`);
+        
 
         // Mapeia os dados do formulário para a estrutura do banco
         const dadosBanco = mapearDadosParaBanco(dadosFormulario);

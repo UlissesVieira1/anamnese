@@ -5,6 +5,17 @@ import { AnamneseTipagem } from '@/types/anamnese'
 export const dynamic = 'force-dynamic'
 
 /**
+ * Normaliza o CPF removendo pontos e traços
+ * @param cpf CPF formatado ou não
+ * @returns CPF apenas com números
+ */
+function normalizarCpf(cpf: string): string {
+  if (!cpf) return ''
+  // Remove todos os caracteres não numéricos (pontos, traços, espaços, etc)
+  return String(cpf).replace(/\D/g, '')
+}
+
+/**
  * Mapeia os dados do formulário para a estrutura do banco de dados
  * @param dadosFormulario Dados recebidos do frontend
  * @returns Dados formatados para inserção no banco
@@ -51,7 +62,7 @@ function mapearDadosParaBanco(dadosFormulario: AnamneseTipagem) {
   // Retorna dados formatados para a estrutura do banco
   return {
     nome: dadosFormulario.nome,
-    cpf: dadosFormulario.cpf,
+    cpf: normalizarCpf(dadosFormulario.cpf), // Normaliza CPF removendo pontos e traços
     dados_cliente: dadosCliente,
     avaliacao: avaliacao,
     termos: termos,
@@ -75,19 +86,47 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Normaliza o CPF antes de validar e salvar
+    const cpfNormalizado = normalizarCpf(dadosFormulario.cpf)
+    console.log(`[DEBUG] CPF normalizado: "${dadosFormulario.cpf}" -> "${cpfNormalizado}"`)
+
     // Mapeia os dados do formulário para a estrutura do banco
     const dadosBanco = mapearDadosParaBanco(dadosFormulario)
 
-    // Verifica se o cliente já preencheu a ficha de anamnese
-    const { data: clienteExistente, error: errorConsulta } = await supabase
+    // Tenta buscar um cliente com o CPF normalizado exato
+    console.log(`[DEBUG] Buscando CPF normalizado: "${cpfNormalizado}"`)
+    
+    const { data: clienteExato, error: errorBuscaExata } = await supabase
       .from('ficha_anamnese')
-      .select('cpf')
-      .eq('cpf', dadosFormulario.cpf)
-      .single()
+      .select('cpf, id')
+      .eq('cpf', cpfNormalizado)
+      .maybeSingle()
 
-    if (errorConsulta && errorConsulta.code !== 'PGRST116') {
-      // PGRST116 é o código de "nenhum resultado encontrado", que é esperado
-      console.error('Erro ao consultar cliente:', errorConsulta)
+    if (errorBuscaExata) {
+      console.error('[DEBUG] Erro na busca exata:', errorBuscaExata)
+    }
+
+    // Se encontrou com busca exata, já existe
+    if (clienteExato) {
+      console.log(`[DEBUG] 🚫 CPF duplicado encontrado (busca exata)! ID: ${clienteExato.id}`)
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Já existe uma ficha de anamnese preenchida para este CPF',
+        },
+        { status: 400 }
+      )
+    }
+
+    // Se não encontrou com busca exata, busca TODOS para comparar normalizados
+    // (para compatibilidade com registros antigos formatados)
+    console.log(`[DEBUG] Não encontrou com busca exata, buscando todos os registros...`)
+    const { data: todosClientes, error: errorConsulta } = await supabase
+      .from('ficha_anamnese')
+      .select('cpf, id')
+
+    if (errorConsulta) {
+      console.error('Erro ao consultar clientes:', errorConsulta)
       return NextResponse.json(
         {
           success: false,
@@ -97,16 +136,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Se o cliente já existe, retorna erro
-    if (clienteExistente) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Já existe uma ficha de anamnese preenchida para este CPF',
-        },
-        { status: 400 }
-      )
+    console.log(`[DEBUG] Total de registros encontrados: ${todosClientes?.length || 0}`)
+
+    // Verifica se existe algum cliente com o mesmo CPF (comparando CPFs normalizados)
+    if (todosClientes && todosClientes.length > 0) {
+      for (const cliente of todosClientes) {
+        const cpfBancoNormalizado = normalizarCpf(cliente.cpf || '')
+        
+        if (cpfBancoNormalizado === cpfNormalizado && cpfBancoNormalizado !== '' && cpfNormalizado.length === 11) {
+          console.log(`[DEBUG] 🚫 CPF DUPLICADO encontrado! ID: ${cliente.id}, CPF banco: "${cliente.cpf}" -> normalizado: "${cpfBancoNormalizado}"`)
+          return NextResponse.json(
+            {
+              success: false,
+              message: 'Já existe uma ficha de anamnese preenchida para este CPF',
+            },
+            { status: 400 }
+          )
+        }
+      }
     }
+
+    console.log(`[DEBUG] ✅ CPF único, prosseguindo com inserção`)
 
     // Insere os dados mapeados no banco Supabase
     const { error: errorInsert } = await supabase

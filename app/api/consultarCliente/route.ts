@@ -3,6 +3,17 @@ import { supabase } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
+/**
+ * Normaliza o CPF removendo pontos e traços
+ * @param cpf CPF formatado ou não
+ * @returns CPF apenas com números
+ */
+function normalizarCpf(cpf: string): string {
+  if (!cpf) return ''
+  // Remove todos os caracteres não numéricos (pontos, traços, espaços, etc)
+  return String(cpf).replace(/\D/g, '')
+}
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
@@ -18,10 +29,14 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Normaliza o CPF antes de buscar
+    const cpfNormalizado = normalizarCpf(cpf)
+    console.log(`[DEBUG] CPF normalizado para busca: "${cpf}" -> "${cpfNormalizado}"`)
+
     const { data: cliente, error } = await supabase
       .from('ficha_anamnese')
       .select('*')
-      .eq('cpf', cpf)
+      .eq('cpf', cpfNormalizado)
       .single()
 
     if (error) {

@@ -314,6 +314,42 @@ h1 {
   transform: translateY(-2px);
 }
 
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn:disabled:hover {
+  transform: none;
+}
+
+.spinner {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.spinner-circle {
+  stroke-dasharray: 32;
+  stroke-dashoffset: 32;
+  animation: spinner-dash 2s ease-in-out infinite;
+}
+
+@keyframes spinner-dash {
+  0% {
+    stroke-dasharray: 0 32;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 16 16;
+    stroke-dashoffset: -16;
+  }
+  100% {
+    stroke-dasharray: 0 32;
+    stroke-dashoffset: -32;
+  }
+}
+
 /* Mensagens */
 /* Toast Notification Styles */
 .toast {

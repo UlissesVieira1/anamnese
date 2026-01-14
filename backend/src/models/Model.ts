@@ -13,6 +13,11 @@ export default class Model {
    * @returns Promise com o resultado da inserção
    */
   async insert(dados: Record<string, any>): Promise<any> {
+    // Normaliza o CPF se existir nos dados antes de inserir
+    if (dados.cpf && typeof dados.cpf === 'string') {
+      dados.cpf = this.normalizarCpf(dados.cpf);
+    }
+    
     const campos = Object.keys(dados); // pega os campos do objeto
     
     // Converte objetos e arrays aninhados para JSON strings
@@ -78,7 +83,10 @@ export default class Model {
    */
   private normalizarCpf(cpf: number | string): string {
     if (!cpf) return '';
-    return String(cpf).replace(/[.\-]/g, '');
+    // Remove todos os caracteres não numéricos (pontos, traços, espaços, etc)
+    const cpfNormalizado = String(cpf).replace(/\D/g, '');
+    console.log(`[DEBUG] CPF normalizado: "${cpf}" -> "${cpfNormalizado}"`);
+    return cpfNormalizado;
   }
 
   async buscarClientePorCpf(cpf: number | string): Promise<any | null> {

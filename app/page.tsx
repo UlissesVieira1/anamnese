@@ -71,13 +71,16 @@ export default function Home() {
   })
 
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Auto-fecha o toast após 5 segundos
+  // Auto-fecha o toast após 7 segundos
   useEffect(() => {
     if (message) {
+      console.log('[DEBUG] Mensagem definida:', message)
       const timer = setTimeout(() => {
+        console.log('[DEBUG] Limpando mensagem após timeout')
         setMessage(null)
-      }, 5000)
+      }, 7000) // Aumentado para 7 segundos
       return () => clearTimeout(timer)
     }
   }, [message])
@@ -240,7 +243,6 @@ export default function Home() {
 
   // Função para enviar o formulário
   const handleSubmit = async (e: React.FormEvent) => {
-
     e.preventDefault()
     setMessage(null)
 
@@ -248,8 +250,9 @@ export default function Home() {
       return
     }
 
-    try {
+    setIsSubmitting(true)
 
+    try {
       // Chama a API Route do Next.js
       const response = await fetch('/api/inserirDadosAnamnese', {
         method: 'POST',
@@ -261,22 +264,36 @@ export default function Home() {
 
       console.log(response);
 
-
       const result = await response.json()
+      
+      console.log('[DEBUG] Resposta da API:', { ok: response.ok, status: response.status, result })
 
       if (response.ok && result.success) {
-        setMessage({ type: 'success', text: result.message || 'Ficha de anamnese salva com sucesso!' })
+        console.log('[DEBUG] ✅ Sucesso! Definindo mensagem de sucesso')
+        // Limpa o formulário ANTES de definir a mensagem
+        const tempFormData = { ...formData }
+        handleReset(true) // Limpa formulário e mensagem
+        // Depois define a nova mensagem de sucesso
+        setTimeout(() => {
+          setMessage({ type: 'success', text: result.message || 'Ficha de anamnese salva com sucesso!' })
+        }, 50)
       } else {
+        console.log('[DEBUG] ❌ Erro! Definindo mensagem de erro')
         setMessage({ type: 'error', text: result.message || 'Erro ao salvar a ficha. Tente novamente.' })
       }
     } catch (error) {
       setMessage({ type: 'error', text: 'Erro ao salvar a ficha. Verifique se o servidor está rodando.' })
       console.error('Erro:', error)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   // Função para limpar o formulário
-  const handleReset = () => {
+  const handleReset = (limparMensagem: boolean = true) => {
+    if (limparMensagem) {
+      setMessage(null)
+    }
     setFormData({
       nome: '',
       endereco: '',
@@ -1190,17 +1207,26 @@ export default function Home() {
 
         {/* Botões */}
         <div className="button-group">
-          <button type="submit" className="btn btn-primary">
-            Salvar Ficha
+          <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <svg className="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'inline-block', marginRight: '8px' }}>
+                  <circle className="spinner-circle" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
+                </svg>
+                <span>Salvando...</span>
+              </>
+            ) : (
+              'Salvar Ficha'
+            )}
           </button>
-          <button type="button" className="btn btn-secondary" onClick={handleReset}>
+          <button type="button" className="btn btn-secondary" onClick={() => handleReset(true)} disabled={isSubmitting}>
             Limpar Formulário
           </button>
         </div>
       </form>
       {/* Toast Notification */}
       {message && (
-        <div className={`toast toast-${message.type} ${message ? 'toast-show' : ''}`}>
+        <div className={`toast toast-${message.type} toast-show`}>
           <div className="toast-content">
             <div className="toast-icon">
               {message.type === 'success' ? (
