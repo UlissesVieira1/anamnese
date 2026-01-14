@@ -31,14 +31,25 @@ export default function BuscarCliente() {
     const carregarClientes = async () => {
       setIsLoadingInicial(true)
       try {
-        const response = await fetch(`/api/listar-clientes?page=${currentPage}&limit=${itemsPerPage}`)
+        const url = `/api/listar-clientes?page=${currentPage}&limit=${itemsPerPage}`
+        console.log('[Frontend] Carregando:', { url, currentPage, itemsPerPage })
+        const response = await fetch(url)
         const result = await response.json()
+
+        console.log('[Frontend] Resposta recebida:', {
+          success: result.success,
+          dataLength: result.data?.length || 0,
+          pagination: result.pagination,
+          firstItem: result.data?.[0]?.nome || 'N/A'
+        })
 
         if (result.success) {
           setTodosClientes(result.data || [])
           setClientesFiltrados(result.data || [])
           setTotalClientes(result.pagination?.total || 0)
           setTotalPages(result.pagination?.totalPages || 0)
+        } else {
+          console.error('Erro na resposta da API:', result.message)
         }
       } catch (error) {
         console.error('Erro ao carregar clientes:', error)
