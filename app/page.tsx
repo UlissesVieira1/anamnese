@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { AnamneseTipagem } from '@/types/anamnese'
 import './globals.css'
-import { log } from 'console'
 
 export default function Home() {
   const [formData, setFormData] = useState<AnamneseTipagem>({
@@ -271,7 +270,6 @@ export default function Home() {
       if (response.ok && result.success) {
         console.log('[DEBUG] ✅ Sucesso! Definindo mensagem de sucesso')
         // Limpa o formulário ANTES de definir a mensagem
-        const tempFormData = { ...formData }
         handleReset(true) // Limpa formulário e mensagem
         // Depois define a nova mensagem de sucesso
         setTimeout(() => {
