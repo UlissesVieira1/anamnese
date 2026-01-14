@@ -14,12 +14,61 @@ interface Cliente {
 
 export default function BuscarCliente() {
   const [query, setQuery] = useState('')
-  const [clientes, setClientes] = useState<Cliente[]>([])
+  const [todosClientes, setTodosClientes] = useState<Cliente[]>([])
+  const [clientesFiltrados, setClientesFiltrados] = useState<Cliente[]>([])
   const [clienteSelecionado, setClienteSelecionado] = useState<Cliente | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingInicial, setIsLoadingInicial] = useState(true)
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(20)
+  const [totalClientes, setTotalClientes] = useState(0)
+  const [totalPages, setTotalPages] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const suggestionsRef = useRef<HTMLDivElement>(null)
+
+  // Carrega lista de clientes com paginação
+  useEffect(() => {
+    const carregarClientes = async () => {
+      setIsLoadingInicial(true)
+      try {
+        const response = await fetch(`/api/listar-clientes?page=${currentPage}&limit=${itemsPerPage}`)
+        const result = await response.json()
+
+        if (result.success) {
+          setTodosClientes(result.data || [])
+          setClientesFiltrados(result.data || [])
+          setTotalClientes(result.pagination?.total || 0)
+          setTotalPages(result.pagination?.totalPages || 0)
+        }
+      } catch (error) {
+        console.error('Erro ao carregar clientes:', error)
+      } finally {
+        setIsLoadingInicial(false)
+      }
+    }
+
+    carregarClientes()
+  }, [currentPage, itemsPerPage])
+
+  // Filtra clientes quando a query muda (apenas para autocomplete)
+  useEffect(() => {
+    if (!query || query.trim().length < 2) {
+      setShowSuggestions(false)
+      return
+    }
+
+    const queryNormalizada = query.trim().toLowerCase()
+    const cpfNormalizado = query.replace(/\D/g, '')
+    
+    const filtrados = todosClientes.filter((cliente) => {
+      const nomeMatch = cliente.nome.toLowerCase().includes(queryNormalizada)
+      const cpfMatch = cliente.cpf.replace(/\D/g, '').includes(cpfNormalizado)
+      return nomeMatch || cpfMatch
+    })
+
+    setClientesFiltrados(filtrados)
+    setShowSuggestions(true)
+  }, [query, todosClientes])
 
   // Fecha sugestões ao clicar fora
   useEffect(() => {
@@ -38,35 +87,10 @@ export default function BuscarCliente() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const buscarClientes = async (searchQuery: string) => {
-    if (searchQuery.length < 2) {
-      setClientes([])
-      setShowSuggestions(false)
-      return
-    }
-
-    setIsLoading(true)
-    try {
-      const response = await fetch(`/api/buscar-clientes?q=${encodeURIComponent(searchQuery)}&limit=10`)
-      const result = await response.json()
-
-      if (result.success) {
-        setClientes(result.data || [])
-        setShowSuggestions(true)
-      }
-    } catch (error) {
-      console.error('Erro ao buscar clientes:', error)
-      setClientes([])
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setQuery(value)
     setClienteSelecionado(null)
-    buscarClientes(value)
   }
 
   const handleClienteSelect = (cliente: Cliente) => {
@@ -90,6 +114,17 @@ export default function BuscarCliente() {
     }
   }
 
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleItemsPerPageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newLimit = parseInt(e.target.value)
+    setItemsPerPage(newLimit)
+    setCurrentPage(1) // Reset para primeira página ao mudar limite
+  }
+
   return (
     <div className="buscar-cliente-container">
       <div className="buscar-cliente-header">
@@ -107,19 +142,14 @@ export default function BuscarCliente() {
               value={query}
               onChange={handleInputChange}
               onFocus={() => query.length >= 2 && setShowSuggestions(true)}
-              placeholder="Digite o nome ou CPF do cliente..."
+              placeholder="Digite o nome ou CPF..."
               className="search-input"
             />
-            {isLoading && (
-              <div className="loading-spinner">
-                <div className="spinner"></div>
-              </div>
-            )}
           </div>
 
-          {showSuggestions && clientes.length > 0 && (
+          {showSuggestions && clientesFiltrados.length > 0 && (
             <div ref={suggestionsRef} className="suggestions-list">
-              {clientes.map((cliente) => (
+              {clientesFiltrados.slice(0, 10).map((cliente) => (
                 <div
                   key={cliente.id}
                   className="suggestion-item"
@@ -134,7 +164,7 @@ export default function BuscarCliente() {
             </div>
           )}
 
-          {showSuggestions && query.length >= 2 && !isLoading && clientes.length === 0 && (
+          {showSuggestions && query.length >= 2 && clientesFiltrados.length === 0 && (
             <div className="suggestions-list">
               <div className="suggestion-item no-results">
                 Nenhum cliente encontrado
@@ -144,9 +174,82 @@ export default function BuscarCliente() {
         </div>
       </div>
 
+      {!clienteSelecionado && !isLoadingInicial && (
+        <div className="clientes-lista">
+          <div className="clientes-lista-header">
+            <h2>Clientes Cadastrados ({totalClientes})</h2>
+            <div className="pagination-controls-top">
+              <label htmlFor="items-per-page">Registros por página:</label>
+              <select
+                id="items-per-page"
+                value={itemsPerPage}
+                onChange={handleItemsPerPageChange}
+                className="items-per-page-select"
+              >
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+          </div>
+          {todosClientes.length === 0 ? (
+            <div className="empty-state">
+              <p>Nenhum cliente cadastrado ainda.</p>
+            </div>
+          ) : (
+            <>
+              <div className="clientes-grid">
+                {todosClientes.map((cliente) => (
+                  <div
+                    key={cliente.id}
+                    className="cliente-card"
+                    onClick={() => handleClienteSelect(cliente)}
+                  >
+                    <div className="cliente-card-name">{cliente.nome}</div>
+                    <div className="cliente-card-cpf">CPF: {formatarCPF(cliente.cpf)}</div>
+                  </div>
+                ))}
+              </div>
+              {totalPages > 1 && (
+                <div className="pagination">
+                  <button
+                    className="pagination-btn"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    Anterior
+                  </button>
+                  <div className="pagination-info">
+                    <span>Página {currentPage} de {totalPages}</span>
+                  </div>
+                  <button
+                    className="pagination-btn"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    Próxima
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
       {clienteSelecionado && (
         <div className="cliente-details">
-          <h2>Dados do Cliente</h2>
+          <div className="cliente-details-header">
+            <h2>Dados do Cliente</h2>
+            <button 
+              className="btn-voltar"
+              onClick={() => {
+                setClienteSelecionado(null)
+                setQuery('')
+              }}
+            >
+              Voltar
+            </button>
+          </div>
           <div className="details-grid">
             <div className="detail-item">
               <label>Nome:</label>
@@ -175,6 +278,13 @@ export default function BuscarCliente() {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {isLoadingInicial && (
+        <div className="loading-inicial">
+          <div className="spinner"></div>
+          <p>Carregando clientes...</p>
         </div>
       )}
     </div>

@@ -84,12 +84,70 @@ export default function Home() {
     }
   }, [message])
 
+  // Funções de máscara
+  const maskCPF = (value: string) => {
+    const numbers = value.replace(/\D/g, '')
+    if (numbers.length <= 11) {
+      return numbers
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+    }
+    return value
+  }
+
+  const maskPhone = (value: string) => {
+    const numbers = value.replace(/\D/g, '')
+    if (numbers.length <= 10) {
+      // Telefone fixo: (00) 0000-0000
+      return numbers
+        .replace(/(\d{2})(\d)/, '($1) $2')
+        .replace(/(\d{4})(\d)/, '$1-$2')
+    }
+    return value
+  }
+
+  const maskCellphone = (value: string) => {
+    const numbers = value.replace(/\D/g, '')
+    if (numbers.length <= 11) {
+      // Celular: (00) 00000-0000
+      return numbers
+        .replace(/(\d{2})(\d)/, '($1) $2')
+        .replace(/(\d{5})(\d)/, '$1-$2')
+    }
+    return value
+  }
+
+  const maskRG = (value: string) => {
+    const numbers = value.replace(/\D/g, '')
+    if (numbers.length <= 9) {
+      return numbers
+        .replace(/(\d{2})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1})$/, '$1-$2')
+    }
+    return value
+  }
+
   // Função para atualizar campos simples
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
+    
+    // Aplica máscaras conforme o campo
+    let maskedValue = value
+    if (name === 'cpf') {
+      maskedValue = maskCPF(value)
+    } else if (name === 'telefone') {
+      maskedValue = maskPhone(value)
+    } else if (name === 'celular') {
+      maskedValue = maskCellphone(value)
+    } else if (name === 'rg') {
+      maskedValue = maskRG(value)
+    }
+    
     setFormData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: maskedValue,
     }))
   }
 
@@ -401,6 +459,8 @@ export default function Home() {
                 name="rg"
                 value={formData.rg}
                 onChange={handleChange}
+                placeholder="00.000.000-0"
+                maxLength={12}
               />
             </div>
 
@@ -412,6 +472,8 @@ export default function Home() {
                 name="cpf"
                 value={formData.cpf}
                 onChange={handleChange}
+                placeholder="000.000.000-00"
+                maxLength={14}
                 required
               />
             </div>
@@ -499,6 +561,8 @@ export default function Home() {
                 name="telefone"
                 value={formData.telefone}
                 onChange={handleChange}
+                placeholder="(00) 0000-0000"
+                maxLength={14}
               />
             </div>
 
@@ -510,6 +574,8 @@ export default function Home() {
                 name="celular"
                 value={formData.celular}
                 onChange={handleChange}
+                placeholder="(00) 00000-0000"
+                maxLength={15}
               />
             </div>
 
