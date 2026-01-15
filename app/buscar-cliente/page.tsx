@@ -116,13 +116,23 @@ export default function BuscarCliente() {
           success: result.success,
           dataLength: result.data?.length || 0,
           pagination: result.pagination,
+          total: result.pagination?.total,
           firstItem: result.data?.[0]?.nome || 'N/A'
         })
 
         if (result.success) {
+          const totalRecebido = result.pagination?.total || 0
+          const dataLength = result.data?.length || 0
+          
+          console.log('[Frontend] Definindo estados:', {
+            totalClientes: totalRecebido,
+            dataLength: dataLength,
+            pagination: result.pagination
+          })
+          
           setTodosClientes(result.data || [])
           setClientesFiltrados(result.data || [])
-          setTotalClientes(result.pagination?.total || 0)
+          setTotalClientes(totalRecebido)
           setTotalPages(result.pagination?.totalPages || 0)
         } else {
           console.error('Erro na resposta da API:', result.message)

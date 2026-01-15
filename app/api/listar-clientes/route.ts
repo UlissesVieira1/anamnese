@@ -35,11 +35,34 @@ export async function GET(request: NextRequest) {
     }
 
     // Filtra apenas registros válidos (com nome e cpf não nulos/vazios)
-    const registrosFiltrados = (todosRegistrosQuery || []).filter(
-      (r) => r.nome && r.nome.trim() && r.cpf && r.cpf.trim()
-    )
+    // Validação mais rigorosa: nome e cpf devem existir, não serem vazios após trim, e cpf deve ter pelo menos 11 dígitos
+    const registrosFiltrados = (todosRegistrosQuery || []).filter((r) => {
+      const nomeValido = r.nome && typeof r.nome === 'string' && r.nome.trim().length > 0
+      const cpfValido = r.cpf && typeof r.cpf === 'string' && r.cpf.trim().length >= 11
+      return nomeValido && cpfValido
+    })
     
     const total = registrosFiltrados.length
+
+    // Log detalhado para debug
+    const registrosInvalidos = (todosRegistrosQuery || []).filter((r) => {
+      const nomeValido = r.nome && typeof r.nome === 'string' && r.nome.trim().length > 0
+      const cpfValido = r.cpf && typeof r.cpf === 'string' && r.cpf.trim().length >= 11
+      return !nomeValido || !cpfValido
+    })
+
+    console.log('[API] Contagem de registros:', {
+      totalBruto: todosRegistrosQuery?.length || 0,
+      totalFiltrado: total,
+      registrosInvalidos: registrosInvalidos.length,
+      detalhesInvalidos: registrosInvalidos.map(r => ({
+        id: r.id,
+        nome: r.nome,
+        cpf: r.cpf,
+        nomeValido: r.nome && typeof r.nome === 'string' && r.nome.trim().length > 0,
+        cpfValido: r.cpf && typeof r.cpf === 'string' && r.cpf.trim().length >= 11
+      }))
+    })
 
     // Se não há registros válidos, retorna vazio
     if (total === 0) {
