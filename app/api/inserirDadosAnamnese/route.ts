@@ -21,24 +21,37 @@ function normalizarCpf(cpf: string): string {
  * @returns Dados formatados para inserção no banco
  */
 function mapearDadosParaBanco(dadosFormulario: AnamneseTipagem & { profissional_id?: number }) {
+  // Garante que campos string não sejam undefined
+  const safeString = (value: any): string => {
+    if (value === null || value === undefined) return ''
+    return String(value)
+  }
+
+  // Garante que campos objeto não sejam undefined
+  const safeObject = (value: any): any => {
+    if (value === null || value === undefined) return {}
+    if (typeof value === 'object' && !Array.isArray(value)) return value
+    return {}
+  }
+
   // Agrupa dados do cliente no campo JSON dados_cliente
   const dadosCliente = {
-    endereco: dadosFormulario.endereco || '',
-    rg: dadosFormulario.rg || '',
-    dataNascimento: dadosFormulario.dataNascimento || '',
-    idade: dadosFormulario.idade || '',
-    comoNosConheceu: dadosFormulario.comoNosConheceu || {},
-    telefone: dadosFormulario.telefone || '',
-    celular: dadosFormulario.celular || '',
-    email: dadosFormulario.email || '',
+    endereco: safeString(dadosFormulario.endereco),
+    rg: safeString(dadosFormulario.rg),
+    dataNascimento: safeString(dadosFormulario.dataNascimento),
+    idade: safeString(dadosFormulario.idade),
+    comoNosConheceu: safeObject(dadosFormulario.comoNosConheceu),
+    telefone: safeString(dadosFormulario.telefone),
+    celular: safeString(dadosFormulario.celular),
+    email: safeString(dadosFormulario.email),
   }
 
   // Agrupa avaliação médica no campo JSON avaliacao
   const avaliacao = {
-    avaliacaoMedica: dadosFormulario.avaliacaoMedica || {},
-    outrasQuestoesMedicas: dadosFormulario.outrasQuestoesMedicas || {},
-    outroProblema: dadosFormulario.outroProblema || '',
-    tipoSanguineo: dadosFormulario.tipoSanguineo || '',
+    avaliacaoMedica: safeObject(dadosFormulario.avaliacaoMedica),
+    outrasQuestoesMedicas: safeObject(dadosFormulario.outrasQuestoesMedicas),
+    outroProblema: safeString(dadosFormulario.outroProblema),
+    tipoSanguineo: safeString(dadosFormulario.tipoSanguineo),
   }
 
   // Determina o campo termos (char(2))
@@ -55,26 +68,34 @@ function mapearDadosParaBanco(dadosFormulario: AnamneseTipagem & { profissional_
 
   // Agrupa informações da tatuagem no campo JSON info_tattoo
   const infoTattoo = {
-    procedimento: dadosFormulario.procedimento || {},
-    declaracoes: dadosFormulario.declaracoes || {},
+    procedimento: safeObject(dadosFormulario.procedimento),
+    declaracoes: safeObject(dadosFormulario.declaracoes),
   }
 
-    // Retorna dados formatados para a estrutura do banco
+  // Normaliza nome e cpf (validação já foi feita antes de chamar esta função)
+  const nome = safeString(dadosFormulario.nome).trim()
+  const cpf = normalizarCpf(dadosFormulario.cpf)
+
+  // Retorna dados formatados para a estrutura do banco
   const dadosRetorno: any = {
-    nome: dadosFormulario.nome,
-    cpf: normalizarCpf(dadosFormulario.cpf), // Normaliza CPF removendo pontos e traços
+    nome: nome,
+    cpf: cpf,
     dados_cliente: dadosCliente,
     avaliacao: avaliacao,
     termos: termos,
-    data_preenchimento_ficha: new Date().toISOString(), // data/hora atual em ISO
+    data_preenchimento_ficha: new Date().toISOString(),
     info_tattoo: infoTattoo,
   }
 
-  // Adiciona profissional_id se fornecido
-  if (dadosFormulario.profissional_id) {
-    dadosRetorno.profissional_id = typeof dadosFormulario.profissional_id === 'number' 
+  // Adiciona id_profissional se fornecido e válido (nome correto da coluna no banco)
+  if (dadosFormulario.profissional_id !== undefined && dadosFormulario.profissional_id !== null) {
+    const profId = typeof dadosFormulario.profissional_id === 'number' 
       ? dadosFormulario.profissional_id 
       : parseInt(String(dadosFormulario.profissional_id))
+    
+    if (!isNaN(profId)) {
+      dadosRetorno.id_profissional = profId
+    }
   }
 
   return dadosRetorno
@@ -83,10 +104,13 @@ function mapearDadosParaBanco(dadosFormulario: AnamneseTipagem & { profissional_
 export async function POST(request: NextRequest) {
   try {
     const dadosRecebidos: any = await request.json()
+    console.log('[DEBUG] Dados recebidos:', JSON.stringify(dadosRecebidos, null, 2))
+    
     const { profissional_id, ...dadosFormulario } = dadosRecebidos
 
     // Validação básica - verifica se nome e cpf foram enviados
     if (!dadosFormulario.nome || !dadosFormulario.cpf) {
+      console.log('[DEBUG] ❌ Validação falhou: nome ou cpf ausente')
       return NextResponse.json(
         {
           success: false,
@@ -96,10 +120,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Valida profissional_id se fornecido
-    if (profissional_id) {
-      const profissionalIdNum = parseInt(profissional_id)
+    // Valida e converte profissional_id se fornecido
+    let profissionalIdNum: number | undefined = undefined
+    if (profissional_id !== undefined && profissional_id !== null && profissional_id !== '') {
+      profissionalIdNum = typeof profissional_id === 'number' 
+        ? profissional_id 
+        : parseInt(String(profissional_id))
+      
       if (isNaN(profissionalIdNum)) {
+        console.log('[DEBUG] ❌ ID do profissional inválido:', profissional_id)
         return NextResponse.json(
           {
             success: false,
@@ -110,13 +139,26 @@ export async function POST(request: NextRequest) {
       }
 
       // Verifica se o profissional existe
+      console.log('[DEBUG] Verificando profissional_id:', profissionalIdNum)
       const { data: profissional, error: errorProf } = await supabase
         .from('profissional_anamnese')
         .select('id')
         .eq('id', profissionalIdNum)
         .maybeSingle()
 
-      if (errorProf || !profissional) {
+      if (errorProf) {
+        console.error('[DEBUG] Erro ao verificar profissional:', errorProf)
+        return NextResponse.json(
+          {
+            success: false,
+            message: 'Erro ao verificar profissional',
+          },
+          { status: 500 }
+        )
+      }
+
+      if (!profissional) {
+        console.log('[DEBUG] ❌ Profissional não encontrado:', profissionalIdNum)
         return NextResponse.json(
           {
             success: false,
@@ -125,6 +167,8 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         )
       }
+      
+      console.log('[DEBUG] ✅ Profissional encontrado:', profissional.id)
     }
 
     // Normaliza o CPF antes de validar e salvar
@@ -132,7 +176,8 @@ export async function POST(request: NextRequest) {
     console.log(`[DEBUG] CPF normalizado: "${dadosFormulario.cpf}" -> "${cpfNormalizado}"`)
 
     // Mapeia os dados do formulário para a estrutura do banco
-    const dadosBanco = mapearDadosParaBanco({ ...dadosFormulario, profissional_id })
+    const dadosBanco = mapearDadosParaBanco({ ...dadosFormulario, profissional_id: profissionalIdNum })
+    console.log('[DEBUG] Dados mapeados para banco:', JSON.stringify(dadosBanco, null, 2))
 
     // Tenta buscar um cliente com o CPF normalizado exato
     console.log(`[DEBUG] Buscando CPF normalizado: "${cpfNormalizado}"`)
@@ -205,11 +250,18 @@ export async function POST(request: NextRequest) {
       .insert([dadosBanco])
 
     if (errorInsert) {
-      console.error('Erro ao inserir dados:', errorInsert)
+      console.error('[DEBUG] ❌ Erro ao inserir dados no Supabase:', errorInsert)
+      console.error('[DEBUG] Detalhes do erro:', {
+        message: errorInsert.message,
+        details: errorInsert.details,
+        hint: errorInsert.hint,
+        code: errorInsert.code
+      })
       return NextResponse.json(
         {
           success: false,
-          message: 'Erro ao salvar a ficha. Tente novamente.',
+          message: `Erro ao salvar a ficha: ${errorInsert.message || 'Erro desconhecido'}`,
+          error: process.env.NODE_ENV === 'development' ? errorInsert : undefined,
         },
         { status: 500 }
       )
@@ -222,12 +274,18 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     )
-  } catch (error) {
-    console.error('Erro ao salvar anamnese:', error)
+  } catch (error: any) {
+    console.error('[DEBUG] ❌ Erro capturado no catch:', error)
+    console.error('[DEBUG] Stack trace:', error?.stack)
     return NextResponse.json(
       {
         success: false,
-        message: 'Erro ao salvar a ficha. Tente novamente.',
+        message: `Erro ao salvar a ficha: ${error?.message || 'Erro desconhecido'}`,
+        error: process.env.NODE_ENV === 'development' ? {
+          message: error?.message,
+          stack: error?.stack,
+          name: error?.name
+        } : undefined,
       },
       { status: 500 }
     )

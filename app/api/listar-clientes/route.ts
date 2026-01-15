@@ -23,25 +23,25 @@ export async function GET(request: NextRequest) {
     }
     const offset = (pageNumber - 1) * limitNumber
 
-    // Busca total de registros
-    const { count, error: countError } = await supabase
+    // Busca todos os registros válidos (com nome e cpf)
+    // Filtra apenas registros que têm os campos necessários
+    const { data: todosRegistrosQuery, error: queryError } = await supabase
       .from('ficha_anamnese')
-      .select('*', { count: 'exact', head: true })
+      .select('id, nome, cpf, dados_cliente')
 
-    if (countError) {
-      console.error('Erro ao contar registros:', countError)
-      throw countError
+    if (queryError) {
+      console.error('Erro na busca do Supabase:', queryError)
+      throw queryError
     }
 
-    const total = count || 0
+    // Filtra apenas registros válidos (com nome e cpf não nulos/vazios)
+    const registrosFiltrados = (todosRegistrosQuery || []).filter(
+      (r) => r.nome && r.nome.trim() && r.cpf && r.cpf.trim()
+    )
+    
+    const total = registrosFiltrados.length
 
-    // Calcula o range correto (range é inclusivo em ambos os lados)
-    // Para 50 registros: offset=0, from=0, to=49 (retorna 50 registros)
-    const from = offset
-    // Garante que o 'to' não seja maior que o total de registros disponíveis
-    // O range do Supabase é inclusivo, então se temos 2 registros (índices 0 e 1),
-    // devemos usar range(0, 1) para obter ambos
-    // IMPORTANTE: Se não há registros, não fazemos a query
+    // Se não há registros válidos, retorna vazio
     if (total === 0) {
       return NextResponse.json(
         {
@@ -58,67 +58,30 @@ export async function GET(request: NextRequest) {
         { status: 200 }
       )
     }
-    
-    const maxTo = Math.max(0, total - 1) // máximo índice disponível
-    const to = Math.min(offset + limitNumber - 1, maxTo)
-    
-    // Garante que 'from' não seja maior que 'to' (caso o offset seja maior que o total)
-    if (from > maxTo) {
-      return NextResponse.json(
-        {
-          success: true,
-          message: 'Página não encontrada',
-          data: [],
-          pagination: {
-            page: pageNumber,
-            limit: limitNumber,
-            total,
-            totalPages: Math.ceil(total / limitNumber),
-          },
-        },
-        { status: 200 }
-      )
-    }
 
     console.log('[API] Parâmetros de paginação:', {
       pageNumber,
       limitNumber,
       offset,
-      from,
-      to,
-      maxTo,
       total,
       expectedRecords: limitNumber
     })
 
-    // Busca registros paginados usando range
-    // O range do Supabase é inclusivo: range(0, 49) retorna 50 registros (índices 0 a 49)
-    // IMPORTANTE: A ordem das chamadas importa - order deve vir antes do range
-    let queryBuilder = supabase
-      .from('ficha_anamnese')
-      .select('id, nome, cpf, dados_cliente')
-      .order('nome', { ascending: true })
-    
-    // Se o total é menor ou igual ao limite, busca todos sem range para evitar problemas
-    // Caso contrário, usa range para paginação
-    let registros, error
-    if (total <= limitNumber && offset === 0) {
-      // Busca todos os registros sem range quando o total é menor que o limite
-      const result = await queryBuilder
-      registros = result.data
-      error = result.error
-    } else {
-      // Usa range para paginação normal
-      const result = await queryBuilder.range(from, to)
-      registros = result.data
-      error = result.error
-    }
+    // Ordena por nome
+    registrosFiltrados.sort((a, b) => {
+      const nomeA = (a.nome || '').toLowerCase()
+      const nomeB = (b.nome || '').toLowerCase()
+      return nomeA.localeCompare(nomeB)
+    })
+
+    // Aplica paginação manualmente
+    const registros = registrosFiltrados.slice(offset, offset + limitNumber)
+    const error = null
 
     console.log('[API] Resultado da query:', {
       registrosLength: registros?.length || 0,
       error: error?.message || null,
-      from,
-      to,
+      offset,
       expected: limitNumber,
       firstRecord: registros?.[0]?.nome || 'N/A'
     })
@@ -137,8 +100,8 @@ export async function GET(request: NextRequest) {
           pagination: {
             page: pageNumber,
             limit: limitNumber,
-            total,
-            totalPages: Math.ceil(total / limitNumber),
+            total: 0,
+            totalPages: 0,
           },
         },
         { status: 200 }

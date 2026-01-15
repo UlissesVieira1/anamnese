@@ -324,10 +324,26 @@ function HomeContent() {
 
     try {
       // Prepara os dados para envio, incluindo profissional_id se presente na URL
+      let profissionalIdNum: number | undefined = undefined
+      if (profissionalId) {
+        const parsed = parseInt(profissionalId)
+        if (!isNaN(parsed)) {
+          profissionalIdNum = parsed
+        }
+      }
+
       const dadosParaEnvio = {
         ...formData,
-        ...(profissionalId && { profissional_id: parseInt(profissionalId) }),
+        ...(profissionalIdNum !== undefined && { profissional_id: profissionalIdNum }),
       }
+
+      console.log('[DEBUG] Dados para envio:', {
+        nome: dadosParaEnvio.nome,
+        cpf: dadosParaEnvio.cpf,
+        profissional_id: profissionalIdNum,
+        temProcedimento: !!dadosParaEnvio.procedimento,
+        temDeclaracoes: !!dadosParaEnvio.declaracoes,
+      })
 
       // Chama a API Route do Next.js
       const response = await fetch('/api/inserirDadosAnamnese', {
@@ -338,7 +354,7 @@ function HomeContent() {
         body: JSON.stringify(dadosParaEnvio),
       })
 
-      console.log(response);
+      console.log('[DEBUG] Response status:', response.status, response.statusText)
 
       const result = await response.json()
       
@@ -354,11 +370,14 @@ function HomeContent() {
         }, 50)
       } else {
         console.log('[DEBUG] ❌ Erro! Definindo mensagem de erro')
-        setMessage({ type: 'error', text: result.message || 'Erro ao salvar a ficha. Tente novamente.' })
+        const errorMessage = result.message || result.error?.message || 'Erro ao salvar a ficha. Tente novamente.'
+        console.error('[DEBUG] Detalhes do erro:', result.error)
+        setMessage({ type: 'error', text: errorMessage })
       }
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Erro ao salvar a ficha. Verifique se o servidor está rodando.' })
-      console.error('Erro:', error)
+    } catch (error: any) {
+      console.error('[DEBUG] ❌ Erro no catch:', error)
+      const errorMessage = error?.message || 'Erro ao salvar a ficha. Verifique se o servidor está rodando.'
+      setMessage({ type: 'error', text: errorMessage })
     } finally {
       setIsSubmitting(false)
     }
