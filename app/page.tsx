@@ -345,12 +345,20 @@ function HomeContent() {
         temDeclaracoes: !!dadosParaEnvio.declaracoes,
       })
 
+      // Prepara headers com token se disponível
+      const token = localStorage.getItem('profissional_token')
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      }
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+
       // Chama a API Route do Next.js
       const response = await fetch('/api/inserirDadosAnamnese', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(dadosParaEnvio),
       })
 

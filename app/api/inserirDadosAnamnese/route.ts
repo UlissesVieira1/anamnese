@@ -16,6 +16,43 @@ function normalizarCpf(cpf: string): string {
 }
 
 /**
+ * Valida CPF verificando dígitos verificadores
+ * @param cpf CPF normalizado (apenas números)
+ * @returns true se o CPF é válido, false caso contrário
+ */
+function validarCPF(cpf: string): boolean {
+  if (!cpf) return false
+  
+  const cpfLimpo = normalizarCpf(cpf)
+  
+  // Verifica se tem 11 dígitos
+  if (cpfLimpo.length !== 11) return false
+  
+  // Verifica se todos os dígitos são iguais (CPF inválido)
+  if (/^(\d)\1{10}$/.test(cpfLimpo)) return false
+  
+  // Valida primeiro dígito verificador
+  let soma = 0
+  for (let i = 0; i < 9; i++) {
+    soma += parseInt(cpfLimpo.charAt(i)) * (10 - i)
+  }
+  let resto = (soma * 10) % 11
+  if (resto === 10 || resto === 11) resto = 0
+  if (resto !== parseInt(cpfLimpo.charAt(9))) return false
+  
+  // Valida segundo dígito verificador
+  soma = 0
+  for (let i = 0; i < 10; i++) {
+    soma += parseInt(cpfLimpo.charAt(i)) * (11 - i)
+  }
+  resto = (soma * 10) % 11
+  if (resto === 10 || resto === 11) resto = 0
+  if (resto !== parseInt(cpfLimpo.charAt(10))) return false
+  
+  return true
+}
+
+/**
  * Mapeia os dados do formulário para a estrutura do banco de dados
  * @param dadosFormulario Dados recebidos do frontend
  * @returns Dados formatados para inserção no banco
@@ -103,6 +140,24 @@ function mapearDadosParaBanco(dadosFormulario: AnamneseTipagem & { profissional_
 
 export async function POST(request: NextRequest) {
   try {
+    // Verifica autenticação do profissional
+    const authHeader = request.headers.get('authorization')
+    const token = authHeader?.replace('Bearer ', '')
+    
+    let profissionalAutenticadoId: number | null = null
+    
+    if (token) {
+      try {
+        const decoded = Buffer.from(token, 'base64').toString('utf-8')
+        const tokenData = JSON.parse(decoded)
+        if (tokenData.id) {
+          profissionalAutenticadoId = tokenData.id
+        }
+      } catch (error) {
+        console.error('[DEBUG] Erro ao decodificar token:', error)
+      }
+    }
+
     const dadosRecebidos: any = await request.json()
     console.log('[DEBUG] Dados recebidos:', JSON.stringify(dadosRecebidos, null, 2))
     
@@ -119,6 +174,23 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // Normaliza o CPF antes de validar
+    const cpfNormalizado = normalizarCpf(dadosFormulario.cpf)
+    console.log(`[DEBUG] CPF normalizado: "${dadosFormulario.cpf}" -> "${cpfNormalizado}"`)
+
+    // Valida CPF (formato e dígitos verificadores)
+    if (!validarCPF(cpfNormalizado)) {
+      console.log('[DEBUG] ❌ CPF inválido:', cpfNormalizado)
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'CPF inválido. Verifique os dígitos e tente novamente.',
+        },
+        { status: 400 }
+      )
+    }
+    console.log('[DEBUG] ✅ CPF válido')
 
     // Valida e converte profissional_id se fornecido
     let profissionalIdNum: number | undefined = undefined
@@ -167,13 +239,50 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         )
       }
-      
-      console.log('[DEBUG] ✅ Profissional encontrado:', profissional.id)
-    }
 
-    // Normaliza o CPF antes de validar e salvar
-    const cpfNormalizado = normalizarCpf(dadosFormulario.cpf)
-    console.log(`[DEBUG] CPF normalizado: "${dadosFormulario.cpf}" -> "${cpfNormalizado}"`)
+      // Valida se o profissional_id corresponde ao profissional autenticado
+      // Se há autenticação, o profissional_id deve corresponder ao autenticado
+      if (profissionalAutenticadoId) {
+        if (profissionalAutenticadoId !== profissionalIdNum) {
+          console.log('[DEBUG] ❌ Profissional_id não corresponde ao profissional autenticado:', {
+            autenticado: profissionalAutenticadoId,
+            fornecido: profissionalIdNum
+          })
+          return NextResponse.json(
+            {
+              success: false,
+              message: 'ID do profissional não corresponde ao profissional autenticado',
+            },
+            { status: 403 }
+          )
+        }
+        console.log('[DEBUG] ✅ Profissional_id corresponde ao profissional autenticado')
+      }
+      
+      console.log('[DEBUG] ✅ Profissional encontrado e validado:', profissional.id)
+    } else if (profissionalAutenticadoId) {
+      // Se não foi fornecido profissional_id mas há autenticação, usa o profissional autenticado
+      profissionalIdNum = profissionalAutenticadoId
+      console.log('[DEBUG] Usando profissional autenticado:', profissionalIdNum)
+      
+      // Verifica se o profissional autenticado existe
+      const { data: profissional, error: errorProf } = await supabase
+        .from('profissional_anamnese')
+        .select('id')
+        .eq('id', profissionalIdNum)
+        .maybeSingle()
+
+      if (errorProf || !profissional) {
+        console.error('[DEBUG] Erro ao verificar profissional autenticado:', errorProf)
+        return NextResponse.json(
+          {
+            success: false,
+            message: 'Profissional autenticado não encontrado',
+          },
+          { status: 400 }
+        )
+      }
+    }
 
     // Mapeia os dados do formulário para a estrutura do banco
     const dadosBanco = mapearDadosParaBanco({ ...dadosFormulario, profissional_id: profissionalIdNum })
