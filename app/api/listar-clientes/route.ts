@@ -99,20 +99,13 @@ export async function GET(request: NextRequest) {
 
     // Aplica paginação manualmente
     const registros = registrosFiltrados.slice(offset, offset + limitNumber)
-    const error = null
 
     console.log('[API] Resultado da query:', {
       registrosLength: registros?.length || 0,
-      error: error?.message || null,
       offset,
       expected: limitNumber,
       firstRecord: registros?.[0]?.nome || 'N/A'
     })
-
-    if (error) {
-      console.error('Erro na busca do Supabase:', error)
-      throw error
-    }
 
     if (!registros || registros.length === 0) {
       return NextResponse.json(
