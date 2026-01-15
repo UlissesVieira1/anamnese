@@ -288,70 +288,69 @@ export async function POST(request: NextRequest) {
     const dadosBanco = mapearDadosParaBanco({ ...dadosFormulario, profissional_id: profissionalIdNum })
     console.log('[DEBUG] Dados mapeados para banco:', JSON.stringify(dadosBanco, null, 2))
 
-    // Tenta buscar um cliente com o CPF normalizado exato
-    console.log(`[DEBUG] Buscando CPF normalizado: "${cpfNormalizado}"`)
+    // Valida se já existe CPF duplicado para o MESMO profissional
+    // Permite o mesmo CPF para profissionais diferentes
+    console.log(`[DEBUG] Verificando CPF duplicado para profissional_id: ${profissionalIdNum}`)
     
-    const { data: clienteExato, error: errorBuscaExata } = await supabase
-      .from('ficha_anamnese')
-      .select('cpf, id')
-      .eq('cpf', cpfNormalizado)
-      .maybeSingle()
+    if (profissionalIdNum !== undefined && profissionalIdNum !== null) {
+      // Busca cliente com o mesmo CPF E id_profissional
+      const { data: clienteDuplicado, error: errorBuscaDuplicado } = await supabase
+        .from('ficha_anamnese')
+        .select('cpf, id, id_profissional')
+        .eq('cpf', cpfNormalizado)
+        .eq('id_profissional', profissionalIdNum)
+        .maybeSingle()
 
-    if (errorBuscaExata) {
-      console.error('[DEBUG] Erro na busca exata:', errorBuscaExata)
-    }
-
-    // Se encontrou com busca exata, já existe
-    if (clienteExato) {
-      console.log(`[DEBUG] 🚫 CPF duplicado encontrado (busca exata)! ID: ${clienteExato.id}`)
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Já existe uma ficha de anamnese preenchida para este CPF',
-        },
-        { status: 400 }
-      )
-    }
-
-    // Se não encontrou com busca exata, busca TODOS para comparar normalizados
-    // (para compatibilidade com registros antigos formatados)
-    console.log(`[DEBUG] Não encontrou com busca exata, buscando todos os registros...`)
-    const { data: todosClientes, error: errorConsulta } = await supabase
-      .from('ficha_anamnese')
-      .select('cpf, id')
-
-    if (errorConsulta) {
-      console.error('Erro ao consultar clientes:', errorConsulta)
-      return NextResponse.json(
-        {
-          success: false,
-          message: 'Erro ao verificar cliente existente.',
-        },
-        { status: 500 }
-      )
-    }
-
-    console.log(`[DEBUG] Total de registros encontrados: ${todosClientes?.length || 0}`)
-
-    // Verifica se existe algum cliente com o mesmo CPF (comparando CPFs normalizados)
-    if (todosClientes && todosClientes.length > 0) {
-      for (const cliente of todosClientes) {
-        const cpfBancoNormalizado = normalizarCpf(cliente.cpf || '')
-        
-        if (cpfBancoNormalizado === cpfNormalizado && cpfBancoNormalizado !== '' && cpfNormalizado.length === 11) {
-          console.log(`[DEBUG] 🚫 CPF DUPLICADO encontrado! ID: ${cliente.id}, CPF banco: "${cliente.cpf}" -> normalizado: "${cpfBancoNormalizado}"`)
-          return NextResponse.json(
-            {
-              success: false,
-              message: 'Já existe uma ficha de anamnese preenchida para este CPF',
-            },
-            { status: 400 }
-          )
-        }
+      if (errorBuscaDuplicado) {
+        console.error('[DEBUG] Erro na busca de duplicado:', errorBuscaDuplicado)
+        return NextResponse.json(
+          {
+            success: false,
+            message: 'Erro ao verificar cliente existente.',
+          },
+          { status: 500 }
+        )
       }
-    }
 
-    console.log(`[DEBUG] ✅ CPF único, prosseguindo com inserção`)
+      if (clienteDuplicado) {
+        console.log(`[DEBUG] 🚫 CPF duplicado encontrado para o mesmo profissional! ID: ${clienteDuplicado.id}, Profissional: ${profissionalIdNum}`)
+        return NextResponse.json(
+          {
+            success: false,
+            message: 'Já existe uma ficha de anamnese preenchida para este CPF e profissional',
+          },
+          { status: 400 }
+        )
+      }
+
+      console.log(`[DEBUG] ✅ CPF único para este profissional, prosseguindo com inserção`)
+    } else {
+      // Se não há profissional_id, busca apenas por CPF (compatibilidade com registros antigos)
+      console.log(`[DEBUG] Sem profissional_id, verificando apenas CPF...`)
+      const { data: clienteExato, error: errorBuscaExata } = await supabase
+        .from('ficha_anamnese')
+        .select('cpf, id, id_profissional')
+        .eq('cpf', cpfNormalizado)
+        .is('id_profissional', null)
+        .maybeSingle()
+
+      if (errorBuscaExata) {
+        console.error('[DEBUG] Erro na busca exata:', errorBuscaExata)
+      }
+
+      if (clienteExato) {
+        console.log(`[DEBUG] 🚫 CPF duplicado encontrado (sem profissional)! ID: ${clienteExato.id}`)
+        return NextResponse.json(
+          {
+            success: false,
+            message: 'Já existe uma ficha de anamnese preenchida para este CPF',
+          },
+          { status: 400 }
+        )
+      }
+
+      console.log(`[DEBUG] ✅ CPF único (sem profissional_id), prosseguindo com inserção`)
+    }
 
     // Insere os dados mapeados no banco Supabase
     const { error: errorInsert } = await supabase
