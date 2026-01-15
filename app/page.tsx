@@ -1,13 +1,22 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { AnamneseTipagem } from '@/types/anamnese'
 import './globals.css'
 
 function HomeContent() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const profissionalId = searchParams?.get('profissional_id')
+  
+  // Redireciona para login se não tiver profissional_id na URL
+  useEffect(() => {
+    if (!profissionalId) {
+      router.push('/login-profissional')
+      return
+    }
+  }, [profissionalId, router])
   
   const [formData, setFormData] = useState<AnamneseTipagem>({
     nome: '',
@@ -424,6 +433,16 @@ function HomeContent() {
       },
     })
     setMessage(null)
+  }
+
+  // Se não tiver profissional_id, não renderiza nada (já redirecionou)
+  if (!profissionalId) {
+    return (
+      <div className="container">
+        <h1>ANAMNESE TATUAGEM</h1>
+        <p>Redirecionando para login...</p>
+      </div>
+    )
   }
 
   return (

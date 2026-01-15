@@ -1,4 +1,4 @@
-.login-container {
+.esqueci-senha-container {
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -7,34 +7,34 @@
   padding: 20px;
 }
 
-.login-box {
+.esqueci-senha-box {
   background: white;
   border-radius: 12px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   padding: 40px;
   width: 100%;
-  max-width: 400px;
+  max-width: 450px;
 }
 
-.login-box h1 {
+.esqueci-senha-box h1 {
   margin: 0 0 10px 0;
   color: #2d3748;
   font-size: 28px;
   text-align: center;
 }
 
-.login-subtitle {
+.esqueci-senha-subtitle {
   color: #718096;
   text-align: center;
   margin-bottom: 30px;
   font-size: 14px;
 }
 
-.login-box .form-group {
+.esqueci-senha-box .form-group {
   margin-bottom: 20px;
 }
 
-.login-box label {
+.esqueci-senha-box label {
   display: block;
   margin-bottom: 8px;
   color: #2d3748;
@@ -42,23 +42,24 @@
   font-size: 14px;
 }
 
-.login-box input {
+.esqueci-senha-box input {
   width: 100%;
   padding: 12px 16px;
   border: 2px solid #e2e8f0;
   border-radius: 8px;
   font-size: 16px;
-  transition: border-color 0.2s;
+  transition: all 0.3s ease;
   box-sizing: border-box;
 }
 
-.login-box input:focus {
+.esqueci-senha-box input:focus {
   outline: none;
   border-color: #8B6F47;
   box-shadow: 0 0 0 3px rgba(139, 111, 71, 0.1);
 }
 
-.btn-login {
+.btn-continuar,
+.btn-redefinir {
   width: 100%;
   padding: 12px;
   background: #8B6F47;
@@ -72,19 +73,21 @@
   margin-bottom: 16px;
 }
 
-.btn-login:hover:not(:disabled) {
+.btn-continuar:hover:not(:disabled),
+.btn-redefinir:hover:not(:disabled) {
   background: #6B5438;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.btn-login:disabled {
+.btn-continuar:disabled,
+.btn-redefinir:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
 }
 
-.btn-criar-conta {
+.btn-voltar-login {
   width: 100%;
   padding: 12px;
   background: transparent;
@@ -100,32 +103,26 @@
   text-align: center;
 }
 
-.btn-criar-conta:hover {
+.btn-voltar-login:hover {
   background: #8B6F47;
   color: white;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.btn-esqueci-senha {
-  background: none;
-  border: none;
-  color: #8B6F47;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 0;
-  text-decoration: underline;
-  transition: color 0.2s;
-}
-
-.btn-esqueci-senha:hover {
-  color: #6B5438;
-}
-
 .error-message {
   background: #fed7d7;
   color: #c53030;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.success-message {
+  background: #c6f6d5;
+  color: #22543d;
   padding: 12px;
   border-radius: 8px;
   margin-bottom: 20px;

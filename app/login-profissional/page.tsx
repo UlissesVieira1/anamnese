@@ -75,7 +75,16 @@ export default function LoginProfissional() {
           </div>
 
           <div className="form-group">
-            <label htmlFor="senha">Senha</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <label htmlFor="senha">Senha</label>
+              <button
+                type="button"
+                className="btn-esqueci-senha"
+                onClick={() => router.push('/esqueci-senha')}
+              >
+                Esqueci minha senha
+              </button>
+            </div>
             <input
               type="password"
               id="senha"
