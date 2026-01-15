@@ -126,16 +126,14 @@ function mapearDadosParaBanco(dadosFormulario: AnamneseTipagem & { profissional_
 
   // Adiciona id_profissional se fornecido e válido (nome correto da coluna no banco)
   if (dadosFormulario.profissional_id !== undefined && dadosFormulario.profissional_id !== null) {
-    // Verifica se não é string vazia (se for string)
-    let isStringEmpty = false
-    if (typeof dadosFormulario.profissional_id === 'string') {
-      isStringEmpty = dadosFormulario.profissional_id.trim() === ''
-    }
+    // Converte para string para verificar se está vazio, depois converte para número
+    const profIdStr = String(dadosFormulario.profissional_id)
+    const isStringEmpty = profIdStr.trim() === ''
     
     if (!isStringEmpty) {
       const profId = typeof dadosFormulario.profissional_id === 'number' 
         ? dadosFormulario.profissional_id 
-        : parseInt(String(dadosFormulario.profissional_id))
+        : parseInt(profIdStr)
       
       if (!isNaN(profId) && profId > 0) {
         dadosRetorno.id_profissional = profId
