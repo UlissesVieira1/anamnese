@@ -125,14 +125,19 @@ function mapearDadosParaBanco(dadosFormulario: AnamneseTipagem & { profissional_
   }
 
   // Adiciona id_profissional se fornecido e válido (nome correto da coluna no banco)
-  if (dadosFormulario.profissional_id !== undefined && dadosFormulario.profissional_id !== null) {
+  if (dadosFormulario.profissional_id !== undefined && dadosFormulario.profissional_id !== null && dadosFormulario.profissional_id !== '') {
     const profId = typeof dadosFormulario.profissional_id === 'number' 
       ? dadosFormulario.profissional_id 
       : parseInt(String(dadosFormulario.profissional_id))
     
-    if (!isNaN(profId)) {
+    if (!isNaN(profId) && profId > 0) {
       dadosRetorno.id_profissional = profId
+      console.log('[DEBUG] id_profissional adicionado ao dadosRetorno:', profId)
+    } else {
+      console.log('[DEBUG] ⚠️ profissional_id inválido ou zero:', dadosFormulario.profissional_id)
     }
+  } else {
+    console.log('[DEBUG] ⚠️ profissional_id não fornecido ou vazio')
   }
 
   return dadosRetorno
@@ -284,9 +289,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Garante que profissionalIdNum está definido antes de mapear
+    if (profissionalIdNum === undefined && profissionalAutenticadoId) {
+      profissionalIdNum = profissionalAutenticadoId
+      console.log('[DEBUG] Usando profissional autenticado como fallback:', profissionalIdNum)
+    }
+
+    console.log('[DEBUG] Profissional ID que será salvo:', profissionalIdNum)
+
     // Mapeia os dados do formulário para a estrutura do banco
     const dadosBanco = mapearDadosParaBanco({ ...dadosFormulario, profissional_id: profissionalIdNum })
     console.log('[DEBUG] Dados mapeados para banco:', JSON.stringify(dadosBanco, null, 2))
+    console.log('[DEBUG] id_profissional no dadosBanco:', dadosBanco.id_profissional)
 
     // Valida se já existe CPF duplicado para o MESMO profissional
     // Permite o mesmo CPF para profissionais diferentes
@@ -353,9 +367,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Insere os dados mapeados no banco Supabase
-    const { error: errorInsert } = await supabase
+    console.log('[DEBUG] Inserindo dados no banco:', {
+      nome: dadosBanco.nome,
+      cpf: dadosBanco.cpf,
+      id_profissional: dadosBanco.id_profissional
+    })
+
+    const { data: registroInserido, error: errorInsert } = await supabase
       .from('ficha_anamnese')
       .insert([dadosBanco])
+      .select('id, nome, cpf, id_profissional')
+      .single()
 
     if (errorInsert) {
       console.error('[DEBUG] ❌ Erro ao inserir dados no Supabase:', errorInsert)
@@ -375,10 +397,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log('[DEBUG] ✅ Registro inserido com sucesso:', {
+      id: registroInserido?.id,
+      nome: registroInserido?.nome,
+      cpf: registroInserido?.cpf,
+      id_profissional: registroInserido?.id_profissional
+    })
+
     return NextResponse.json(
       {
         success: true,
         message: 'Ficha de anamnese salva com sucesso!',
+        data: {
+          id: registroInserido?.id,
+          id_profissional: registroInserido?.id_profissional
+        }
       },
       { status: 201 }
     )

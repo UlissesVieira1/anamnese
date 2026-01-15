@@ -60,9 +60,19 @@ export async function GET(request: NextRequest) {
       .eq('id_profissional', profissionalId)
 
     if (queryError) {
-      console.error('Erro na busca do Supabase:', queryError)
+      console.error('[API] Erro na busca do Supabase:', queryError)
       throw queryError
     }
+
+    console.log('[API] Registros brutos encontrados:', {
+      total: todosRegistrosQuery?.length || 0,
+      registros: todosRegistrosQuery?.map(r => ({
+        id: r.id,
+        nome: r.nome,
+        cpf: r.cpf,
+        id_profissional: r.id_profissional
+      })) || []
+    })
 
     // Filtra apenas registros válidos (com nome e cpf não nulos/vazios)
     // Validação mais rigorosa: nome e cpf devem existir, não serem vazios após trim, e cpf deve ter pelo menos 11 dígitos
