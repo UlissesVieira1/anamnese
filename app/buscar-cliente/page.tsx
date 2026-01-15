@@ -12,11 +12,24 @@ interface Cliente {
   data_nascimento: string | null
 }
 
+interface ClienteCompleto {
+  id: number
+  nome: string
+  cpf: string
+  dados_cliente?: any
+  avaliacao?: any
+  info_tattoo?: any
+  termos?: string
+  data_preenchimento_ficha?: string
+}
+
 export default function BuscarCliente() {
   const [query, setQuery] = useState('')
   const [todosClientes, setTodosClientes] = useState<Cliente[]>([])
   const [clientesFiltrados, setClientesFiltrados] = useState<Cliente[]>([])
   const [clienteSelecionado, setClienteSelecionado] = useState<Cliente | null>(null)
+  const [clienteCompleto, setClienteCompleto] = useState<ClienteCompleto | null>(null)
+  const [isLoadingCompleto, setIsLoadingCompleto] = useState(false)
   const [isLoadingInicial, setIsLoadingInicial] = useState(true)
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
@@ -104,10 +117,24 @@ export default function BuscarCliente() {
     setClienteSelecionado(null)
   }
 
-  const handleClienteSelect = (cliente: Cliente) => {
+  const handleClienteSelect = async (cliente: Cliente) => {
     setClienteSelecionado(cliente)
-    setQuery(cliente.nome)
     setShowSuggestions(false)
+    setIsLoadingCompleto(true)
+    setClienteCompleto(null)
+    
+    try {
+      const response = await fetch(`/api/consultarCliente?id=${cliente.id}`)
+      const result = await response.json()
+      
+      if (result.success && result.data) {
+        setClienteCompleto(result.data)
+      }
+    } catch (error) {
+      console.error('Erro ao buscar dados completos:', error)
+    } finally {
+      setIsLoadingCompleto(false)
+    }
   }
 
   const formatarCPF = (cpf: string) => {
@@ -123,6 +150,53 @@ export default function BuscarCliente() {
     } catch {
       return data
     }
+  }
+
+  const traduzirDeclaracao = (key: string): string => {
+    const traducoes: { [key: string]: string } = {
+      seguirCuidados: 'Seguir Cuidados',
+      condicoesHigienicas: 'Condições Higiênicas',
+      permanenciaTatuagem: 'Permanência da Tatuagem',
+      veracidadeInformacoes: 'Veracidade das Informações'
+    }
+    return traducoes[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())
+  }
+
+  const traduzirAvaliacaoMedica = (key: string): string => {
+    const traducoes: { [key: string]: string } = {
+      tratamentoMedico: 'Tratamento Médico',
+      diabetes: 'Diabetes',
+      cirurgiaRecente: 'Cirurgia Recente',
+      alergia: 'Alergia',
+      problemaPeleCicatrizacao: 'Problema de Pele/Cicatrização',
+      depressaoPanicoAnsiedade: 'Depressão/Pânico/Ansiedade',
+      doencaInfectocontagiosa: 'Doença Infectocontagiosa',
+      historicoConvulsaoEpilepsia: 'Histórico de Convulsão/Epilepsia'
+    }
+    return traducoes[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())
+  }
+
+  const traduzirQuestaoMedica = (key: string): string => {
+    const traducoes: { [key: string]: string } = {
+      cancer: 'Câncer',
+      disturbioCirculatorio: 'Distúrbio Circulatório',
+      usoDrogas: 'Uso de Drogas',
+      efeitoAlcool: 'Efeito do Álcool',
+      dormiuUltimaNoite: 'Dormiu na Última Noite',
+      emJejum: 'Em Jejum',
+      cardiopatia: 'Cardiopatia',
+      hipertensao: 'Hipertensão',
+      hipotensao: 'Hipotensão',
+      marcapasso: 'Marca-passo',
+      hemofilia: 'Hemofilia',
+      hepatite: 'Hepatite',
+      anemia: 'Anemia',
+      queloid: 'Queloide',
+      vitiligo: 'Vitiligo',
+      gestante: 'Gestante',
+      amamentando: 'Amamentando'
+    }
+    return traducoes[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())
   }
 
   const handlePageChange = (newPage: number) => {
@@ -250,17 +324,242 @@ export default function BuscarCliente() {
       {clienteSelecionado && (
         <div className="cliente-details">
           <div className="cliente-details-header">
-            <h2>Dados do Cliente</h2>
+            <h2>Ficha Completa do Cliente</h2>
             <button 
               className="btn-voltar"
               onClick={() => {
                 setClienteSelecionado(null)
+                setClienteCompleto(null)
                 setQuery('')
               }}
             >
               Voltar
             </button>
           </div>
+          
+          {isLoadingCompleto ? (
+            <div className="loading-completo">
+              <div className="spinner"></div>
+              <p>Carregando dados completos...</p>
+            </div>
+          ) : clienteCompleto ? (
+            <>
+              {/* Dados Pessoais */}
+              <div className="details-section">
+                <h3>Dados Pessoais</h3>
+                <div className="details-grid">
+                  <div className="detail-item">
+                    <label>Nome:</label>
+                    <span>{clienteCompleto.nome}</span>
+                  </div>
+                  <div className="detail-item">
+                    <label>CPF:</label>
+                    <span>{formatarCPF(clienteCompleto.cpf)}</span>
+                  </div>
+                  {clienteCompleto.dados_cliente?.rg && (
+                    <div className="detail-item">
+                      <label>RG:</label>
+                      <span>{clienteCompleto.dados_cliente.rg}</span>
+                    </div>
+                  )}
+                  {clienteCompleto.dados_cliente?.dataNascimento && (
+                    <div className="detail-item">
+                      <label>Data de Nascimento:</label>
+                      <span>{formatarData(clienteCompleto.dados_cliente.dataNascimento)}</span>
+                    </div>
+                  )}
+                  {clienteCompleto.dados_cliente?.idade && (
+                    <div className="detail-item">
+                      <label>Idade:</label>
+                      <span>{clienteCompleto.dados_cliente.idade}</span>
+                    </div>
+                  )}
+                  {clienteCompleto.dados_cliente?.endereco && (
+                    <div className="detail-item full-width">
+                      <label>Endereço:</label>
+                      <span>{clienteCompleto.dados_cliente.endereco}</span>
+                    </div>
+                  )}
+                  {clienteCompleto.dados_cliente?.telefone && (
+                    <div className="detail-item">
+                      <label>Telefone:</label>
+                      <span>{clienteCompleto.dados_cliente.telefone}</span>
+                    </div>
+                  )}
+                  {clienteCompleto.dados_cliente?.celular && (
+                    <div className="detail-item">
+                      <label>Celular:</label>
+                      <span>{clienteCompleto.dados_cliente.celular}</span>
+                    </div>
+                  )}
+                  {clienteCompleto.dados_cliente?.email && (
+                    <div className="detail-item">
+                      <label>E-mail:</label>
+                      <span>{clienteCompleto.dados_cliente.email}</span>
+                    </div>
+                  )}
+                  {clienteCompleto.dados_cliente?.comoNosConheceu && (
+                    <div className="detail-item full-width">
+                      <label>Como nos conheceu:</label>
+                      <div className="como-nos-conheceu">
+                        {clienteCompleto.dados_cliente.comoNosConheceu.instagram && <span>Instagram</span>}
+                        {clienteCompleto.dados_cliente.comoNosConheceu.facebook && <span>Facebook</span>}
+                        {clienteCompleto.dados_cliente.comoNosConheceu.outro && <span>Outro</span>}
+                        {clienteCompleto.dados_cliente.comoNosConheceu.indicacao && (
+                          <span>Indicação: {clienteCompleto.dados_cliente.comoNosConheceu.indicacao}</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Avaliação Médica */}
+              {clienteCompleto.avaliacao && (
+                <div className="details-section">
+                  <h3>Avaliação Médica</h3>
+                  <div className="details-grid">
+                    {clienteCompleto.avaliacao.tipoSanguineo && (
+                      <div className="detail-item">
+                        <label>Tipo Sanguíneo:</label>
+                        <span>{clienteCompleto.avaliacao.tipoSanguineo}</span>
+                      </div>
+                    )}
+                    {clienteCompleto.avaliacao.outroProblema && (
+                      <div className="detail-item full-width">
+                        <label>Outro Problema:</label>
+                        <span>{clienteCompleto.avaliacao.outroProblema}</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {clienteCompleto.avaliacao.avaliacaoMedica && (
+                    <div className="avaliacao-medica-list">
+                      {Object.entries(clienteCompleto.avaliacao.avaliacaoMedica).map(([key, value]: [string, any]) => {
+                        if (value?.sim || value?.nao) {
+                          return (
+                            <div key={key} className="avaliacao-item">
+                              <label>{traduzirAvaliacaoMedica(key)}:</label>
+                              <span>{value.sim ? 'Sim' : 'Não'}</span>
+                              {value.especifique && (
+                                <span className="especifique"> - {value.especifique}</span>
+                              )}
+                            </div>
+                          )
+                        }
+                        return null
+                      })}
+                    </div>
+                  )}
+
+                  {clienteCompleto.avaliacao.outrasQuestoesMedicas && (
+                    <div className="outras-questoes">
+                      <h4>Outras Questões Médicas:</h4>
+                      <div className="questoes-grid">
+                        {Object.entries(clienteCompleto.avaliacao.outrasQuestoesMedicas).map(([key, value]: [string, any]) => {
+                          if (value) {
+                            return (
+                              <div key={key} className="questao-item">
+                                {traduzirQuestaoMedica(key)}
+                              </div>
+                            )
+                          }
+                          return null
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Informações do Procedimento */}
+              {clienteCompleto.info_tattoo && (
+                <div className="details-section">
+                  <h3>Informações do Procedimento</h3>
+                  {clienteCompleto.info_tattoo.procedimento && (
+                    <div className="details-grid">
+                      {clienteCompleto.info_tattoo.procedimento.local && (
+                        <div className="detail-item">
+                          <label>Local:</label>
+                          <span>{clienteCompleto.info_tattoo.procedimento.local}</span>
+                        </div>
+                      )}
+                      {clienteCompleto.info_tattoo.procedimento.estilo && (
+                        <div className="detail-item">
+                          <label>Estilo:</label>
+                          <span>{clienteCompleto.info_tattoo.procedimento.estilo}</span>
+                        </div>
+                      )}
+                      {clienteCompleto.info_tattoo.procedimento.profissional && (
+                        <div className="detail-item">
+                          <label>Profissional:</label>
+                          <span>{clienteCompleto.info_tattoo.procedimento.profissional}</span>
+                        </div>
+                      )}
+                      {clienteCompleto.info_tattoo.procedimento.data && (
+                        <div className="detail-item">
+                          <label>Data:</label>
+                          <span>{formatarData(clienteCompleto.info_tattoo.procedimento.data)}</span>
+                        </div>
+                      )}
+                      {clienteCompleto.info_tattoo.procedimento.valor && (
+                        <div className="detail-item">
+                          <label>Valor:</label>
+                          <span>{clienteCompleto.info_tattoo.procedimento.valor}</span>
+                        </div>
+                      )}
+                      {clienteCompleto.info_tattoo.procedimento.observacoes && (
+                        <div className="detail-item full-width">
+                          <label>Observações:</label>
+                          <span>{clienteCompleto.info_tattoo.procedimento.observacoes}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {clienteCompleto.info_tattoo.declaracoes && (
+                    <div className="declaracoes-list">
+                      <h4>Declarações:</h4>
+                      {Object.entries(clienteCompleto.info_tattoo.declaracoes).map(([key, value]: [string, any]) => {
+                        if (value) {
+                          return (
+                            <div key={key} className="declaracao-item">
+                              ✓ {traduzirDeclaracao(key)}
+                            </div>
+                          )
+                        }
+                        return null
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Informações Adicionais */}
+              <div className="details-section">
+                <h3>Informações Adicionais</h3>
+                <div className="details-grid">
+                  <div className="detail-item">
+                    <label>Termos Aceitos:</label>
+                    <span>
+                      {(() => {
+                        const termos = clienteCompleto.termos?.trim() || ''
+                        if (termos.toUpperCase() === 'S') return 'Aceitou'
+                        if (termos.toUpperCase() === 'N') return 'Não aceitou'
+                        return 'Não informado'
+                      })()}
+                    </span>
+                  </div>
+                  {clienteCompleto.data_preenchimento_ficha && (
+                    <div className="detail-item">
+                      <label>Data de Preenchimento:</label>
+                      <span>{formatarData(clienteCompleto.data_preenchimento_ficha)}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          ) : (
           <div className="details-grid">
             <div className="detail-item">
               <label>Nome:</label>
@@ -289,6 +588,7 @@ export default function BuscarCliente() {
               </div>
             )}
           </div>
+          )}
         </div>
       )}
 

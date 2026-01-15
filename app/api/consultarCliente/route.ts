@@ -18,26 +18,41 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const cpf = searchParams.get('cpf')
+    const id = searchParams.get('id')
 
-    if (!cpf) {
+    if (!cpf && !id) {
       return NextResponse.json(
         {
           success: false,
-          message: 'CPF é obrigatório',
+          message: 'CPF ou ID é obrigatório',
         },
         { status: 400 }
       )
     }
 
-    // Normaliza o CPF antes de buscar
-    const cpfNormalizado = normalizarCpf(cpf)
-    console.log(`[DEBUG] CPF normalizado para busca: "${cpf}" -> "${cpfNormalizado}"`)
+    let queryBuilder = supabase.from('ficha_anamnese').select('*')
 
-    const { data: cliente, error } = await supabase
-      .from('ficha_anamnese')
-      .select('*')
-      .eq('cpf', cpfNormalizado)
-      .single()
+    if (id) {
+      // Busca por ID
+      const clienteId = parseInt(id, 10)
+      if (isNaN(clienteId)) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: 'ID inválido',
+          },
+          { status: 400 }
+        )
+      }
+      queryBuilder = queryBuilder.eq('id', clienteId)
+    } else if (cpf) {
+      // Normaliza o CPF antes de buscar
+      const cpfNormalizado = normalizarCpf(cpf)
+      console.log(`[DEBUG] CPF normalizado para busca: "${cpf}" -> "${cpfNormalizado}"`)
+      queryBuilder = queryBuilder.eq('cpf', cpfNormalizado)
+    }
+
+    const { data: cliente, error } = await queryBuilder.single()
 
     if (error) {
       if (error.code === 'PGRST116') {
