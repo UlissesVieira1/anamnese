@@ -20,7 +20,7 @@ function normalizarCpf(cpf: string): string {
  * @param dadosFormulario Dados recebidos do frontend
  * @returns Dados formatados para inserção no banco
  */
-function mapearDadosParaBanco(dadosFormulario: AnamneseTipagem) {
+function mapearDadosParaBanco(dadosFormulario: AnamneseTipagem & { profissional_id?: number }) {
   // Agrupa dados do cliente no campo JSON dados_cliente
   const dadosCliente = {
     endereco: dadosFormulario.endereco || '',
@@ -59,8 +59,8 @@ function mapearDadosParaBanco(dadosFormulario: AnamneseTipagem) {
     declaracoes: dadosFormulario.declaracoes || {},
   }
 
-  // Retorna dados formatados para a estrutura do banco
-  return {
+    // Retorna dados formatados para a estrutura do banco
+  const dadosRetorno: any = {
     nome: dadosFormulario.nome,
     cpf: normalizarCpf(dadosFormulario.cpf), // Normaliza CPF removendo pontos e traços
     dados_cliente: dadosCliente,
@@ -69,11 +69,21 @@ function mapearDadosParaBanco(dadosFormulario: AnamneseTipagem) {
     data_preenchimento_ficha: new Date().toISOString(), // data/hora atual em ISO
     info_tattoo: infoTattoo,
   }
+
+  // Adiciona profissional_id se fornecido
+  if (dadosFormulario.profissional_id) {
+    dadosRetorno.profissional_id = typeof dadosFormulario.profissional_id === 'number' 
+      ? dadosFormulario.profissional_id 
+      : parseInt(String(dadosFormulario.profissional_id))
+  }
+
+  return dadosRetorno
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const dadosFormulario: AnamneseTipagem = await request.json()
+    const dadosRecebidos: any = await request.json()
+    const { profissional_id, ...dadosFormulario } = dadosRecebidos
 
     // Validação básica - verifica se nome e cpf foram enviados
     if (!dadosFormulario.nome || !dadosFormulario.cpf) {
@@ -86,12 +96,43 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Valida profissional_id se fornecido
+    if (profissional_id) {
+      const profissionalIdNum = parseInt(profissional_id)
+      if (isNaN(profissionalIdNum)) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: 'ID do profissional inválido',
+          },
+          { status: 400 }
+        )
+      }
+
+      // Verifica se o profissional existe
+      const { data: profissional, error: errorProf } = await supabase
+        .from('profissional_anamnese')
+        .select('id')
+        .eq('id', profissionalIdNum)
+        .maybeSingle()
+
+      if (errorProf || !profissional) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: 'Profissional não encontrado',
+          },
+          { status: 400 }
+        )
+      }
+    }
+
     // Normaliza o CPF antes de validar e salvar
     const cpfNormalizado = normalizarCpf(dadosFormulario.cpf)
     console.log(`[DEBUG] CPF normalizado: "${dadosFormulario.cpf}" -> "${cpfNormalizado}"`)
 
     // Mapeia os dados do formulário para a estrutura do banco
-    const dadosBanco = mapearDadosParaBanco(dadosFormulario)
+    const dadosBanco = mapearDadosParaBanco({ ...dadosFormulario, profissional_id })
 
     // Tenta buscar um cliente com o CPF normalizado exato
     console.log(`[DEBUG] Buscando CPF normalizado: "${cpfNormalizado}"`)

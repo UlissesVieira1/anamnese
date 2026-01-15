@@ -1,10 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { AnamneseTipagem } from '@/types/anamnese'
 import './globals.css'
 
-export default function Home() {
+function HomeContent() {
+  const searchParams = useSearchParams()
+  const profissionalId = searchParams?.get('profissional_id')
+  
   const [formData, setFormData] = useState<AnamneseTipagem>({
     nome: '',
     endereco: '',
@@ -310,13 +314,19 @@ export default function Home() {
     setIsSubmitting(true)
 
     try {
+      // Prepara os dados para envio, incluindo profissional_id se presente na URL
+      const dadosParaEnvio = {
+        ...formData,
+        ...(profissionalId && { profissional_id: parseInt(profissionalId) }),
+      }
+
       // Chama a API Route do Next.js
       const response = await fetch('/api/inserirDadosAnamnese', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(dadosParaEnvio),
       })
 
       console.log(response);
@@ -1323,5 +1333,18 @@ export default function Home() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="container">
+        <h1>ANAMNESE TATUAGEM</h1>
+        <p>Carregando...</p>
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   )
 }

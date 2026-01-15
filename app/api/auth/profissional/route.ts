@@ -1,48 +1,75 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { supabase } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
-
-// Senha simples para profissionais (em produção, use autenticação adequada)
-// Você pode mudar essa senha ou usar variável de ambiente
-const SENHA_PROFISSIONAL = process.env.SENHA_PROFISSIONAL || 'profissional123'
 
 /**
  * API para autenticação de profissionais
  */
 export async function POST(request: NextRequest) {
   try {
-    const { senha } = await request.json()
+    const { email, senha } = await request.json()
 
-    if (!senha) {
+    if (!email || !senha) {
       return NextResponse.json(
         {
           success: false,
-          message: 'Senha é obrigatória',
+          message: 'Email e senha são obrigatórios',
         },
         { status: 400 }
       )
     }
 
-    if (senha === SENHA_PROFISSIONAL) {
-      // Gera um token simples (em produção, use JWT ou similar)
-      const token = Buffer.from(`profissional_${Date.now()}`).toString('base64')
-      
+    // Busca o profissional no banco de dados
+    const { data: profissional, error } = await supabase
+      .from('profissional_anamnese')
+      .select('id, nome, email')
+      .eq('email', email)
+      .eq('senha', senha)
+      .maybeSingle()
+
+    if (error) {
+      console.error('Erro ao buscar profissional:', error)
       return NextResponse.json(
         {
-          success: true,
-          message: 'Autenticação realizada com sucesso!',
-          token,
+          success: false,
+          message: 'Erro ao processar autenticação.',
         },
-        { status: 200 }
+        { status: 500 }
       )
     }
 
+    if (!profissional) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Email ou senha incorretos',
+        },
+        { status: 401 }
+      )
+    }
+
+    // Gera um token simples com o ID do profissional (em produção, use JWT ou similar)
+    const tokenData = {
+      id: profissional.id,
+      nome: profissional.nome,
+      email: profissional.email,
+      timestamp: Date.now()
+    }
+    const token = Buffer.from(JSON.stringify(tokenData)).toString('base64')
+    
     return NextResponse.json(
       {
-        success: false,
-        message: 'Senha incorreta',
+        success: true,
+        message: 'Autenticação realizada com sucesso!',
+        token,
+        profissional: {
+          id: profissional.id,
+          nome: profissional.nome,
+          email: profissional.email,
+        },
       },
-      { status: 401 }
+      { status: 200 }
     )
   } catch (error) {
     console.error('Erro na autenticação:', error)
@@ -74,17 +101,34 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Verifica se o token é válido (em produção, valide o JWT)
+    // Verifica se o token é válido
     try {
       const decoded = Buffer.from(token, 'base64').toString('utf-8')
-      if (decoded.startsWith('profissional_')) {
-        return NextResponse.json(
-          {
-            success: true,
-            authenticated: true,
-          },
-          { status: 200 }
-        )
+      const tokenData = JSON.parse(decoded)
+      
+      if (tokenData.id && tokenData.email) {
+        // Verifica se o profissional ainda existe no banco
+        const { data: profissional } = await supabase
+          .from('profissional_anamnese')
+          .select('id, nome, email')
+          .eq('id', tokenData.id)
+          .eq('email', tokenData.email)
+          .maybeSingle()
+
+        if (profissional) {
+          return NextResponse.json(
+            {
+              success: true,
+              authenticated: true,
+              profissional: {
+                id: profissional.id,
+                nome: profissional.nome,
+                email: profissional.email,
+              },
+            },
+            { status: 200 }
+          )
+        }
       }
     } catch {
       // Token inválido

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import './buscar-cliente.css'
 
 interface Cliente {
@@ -23,7 +24,14 @@ interface ClienteCompleto {
   data_preenchimento_ficha?: string
 }
 
+interface Profissional {
+  id: number
+  nome: string
+  email: string
+}
+
 export default function BuscarCliente() {
+  const router = useRouter()
   const [query, setQuery] = useState('')
   const [todosClientes, setTodosClientes] = useState<Cliente[]>([])
   const [clientesFiltrados, setClientesFiltrados] = useState<Cliente[]>([])
@@ -36,11 +44,66 @@ export default function BuscarCliente() {
   const [itemsPerPage, setItemsPerPage] = useState(20)
   const [totalClientes, setTotalClientes] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
+  const [profissional, setProfissional] = useState<Profissional | null>(null)
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const inputRef = useRef<HTMLInputElement>(null)
   const suggestionsRef = useRef<HTMLDivElement>(null)
 
-  // Carrega lista de clientes com paginação
+  // Verifica autenticação ao carregar a página
   useEffect(() => {
+    const verificarAutenticacao = async () => {
+      const token = localStorage.getItem('profissional_token')
+      const profissionalData = localStorage.getItem('profissional_data')
+
+      if (!token) {
+        router.push('/login-profissional')
+        return
+      }
+
+      try {
+        // Verifica se o token ainda é válido
+        const response = await fetch('/api/auth/profissional', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        })
+
+        const result = await response.json()
+
+        if (result.success && result.authenticated && result.profissional) {
+          setProfissional(result.profissional)
+        } else {
+          // Token inválido, redireciona para login
+          localStorage.removeItem('profissional_token')
+          localStorage.removeItem('profissional_data')
+          router.push('/login-profissional')
+        }
+      } catch (error) {
+        console.error('Erro ao verificar autenticação:', error)
+        // Em caso de erro, tenta usar dados do localStorage
+        if (profissionalData) {
+          try {
+            const data = JSON.parse(profissionalData)
+            setProfissional(data)
+          } catch {
+            router.push('/login-profissional')
+          }
+        } else {
+          router.push('/login-profissional')
+        }
+      } finally {
+        setIsCheckingAuth(false)
+      }
+    }
+
+    verificarAutenticacao()
+  }, [router])
+
+  // Carrega lista de clientes com paginação (apenas se autenticado)
+  useEffect(() => {
+    if (isCheckingAuth || !profissional) return
+
     const carregarClientes = async () => {
       setIsLoadingInicial(true)
       try {
@@ -72,7 +135,7 @@ export default function BuscarCliente() {
     }
 
     carregarClientes()
-  }, [currentPage, itemsPerPage])
+  }, [currentPage, itemsPerPage, isCheckingAuth, profissional])
 
   // Filtra clientes quando a query muda (apenas para autocomplete)
   useEffect(() => {
@@ -210,10 +273,68 @@ export default function BuscarCliente() {
     setCurrentPage(1) // Reset para primeira página ao mudar limite
   }
 
+  const handleLogout = () => {
+    localStorage.removeItem('profissional_token')
+    localStorage.removeItem('profissional_data')
+    router.push('/login-profissional')
+  }
+
+  const copiarLinkCompartilhamento = () => {
+    if (!profissional) return
+
+    const url = `${window.location.origin}?profissional_id=${profissional.id}`
+    
+    navigator.clipboard.writeText(url).then(() => {
+      alert('Link copiado para a área de transferência!')
+    }).catch((err) => {
+      console.error('Erro ao copiar link:', err)
+      // Fallback: mostra o link para o usuário copiar manualmente
+      prompt('Copie este link:', url)
+    })
+  }
+
+  // Mostra loading enquanto verifica autenticação
+  if (isCheckingAuth) {
+    return (
+      <div className="buscar-cliente-container">
+        <div className="loading-inicial">
+          <div className="spinner"></div>
+          <p>Verificando autenticação...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Se não estiver autenticado, não renderiza nada (já redirecionou)
+  if (!profissional) {
+    return null
+  }
+
   return (
     <div className="buscar-cliente-container">
       <div className="buscar-cliente-header">
-        <h1>Buscar Cliente</h1>
+        <div className="header-content">
+          <h1>Buscar Cliente</h1>
+          <div className="header-actions">
+            <button 
+              className="btn-compartilhar"
+              onClick={copiarLinkCompartilhamento}
+              title="Copiar link para compartilhar ficha de anamnese"
+            >
+              📋 Copiar Link da Ficha
+            </button>
+            <div className="profissional-info">
+              <span>Olá, {profissional.nome}</span>
+              <button 
+                className="btn-logout"
+                onClick={handleLogout}
+                title="Sair"
+              >
+                Sair
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="search-section">
