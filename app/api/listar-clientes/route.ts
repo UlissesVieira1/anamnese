@@ -8,6 +8,34 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(request: NextRequest) {
   try {
+    // Verifica autenticação do profissional
+    const authHeader = request.headers.get('authorization')
+    const token = authHeader?.replace('Bearer ', '')
+    
+    let profissionalId: number | null = null
+    
+    if (token) {
+      try {
+        const decoded = Buffer.from(token, 'base64').toString('utf-8')
+        const tokenData = JSON.parse(decoded)
+        if (tokenData.id) {
+          profissionalId = tokenData.id
+        }
+      } catch (error) {
+        console.error('[API] Erro ao decodificar token:', error)
+      }
+    }
+
+    if (!profissionalId) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Autenticação necessária',
+        },
+        { status: 401 }
+      )
+    }
+
     const searchParams = request.nextUrl.searchParams
     const pageParam = searchParams.get('page') || '1'
     const limitParam = searchParams.get('limit') || '20'
@@ -23,11 +51,13 @@ export async function GET(request: NextRequest) {
     }
     const offset = (pageNumber - 1) * limitNumber
 
-    // Busca todos os registros válidos (com nome e cpf)
-    // Filtra apenas registros que têm os campos necessários
+    console.log('[API] Listando clientes para profissional_id:', profissionalId)
+
+    // Busca registros válidos filtrados por profissional
     const { data: todosRegistrosQuery, error: queryError } = await supabase
       .from('ficha_anamnese')
-      .select('id, nome, cpf, dados_cliente')
+      .select('id, nome, cpf, dados_cliente, id_profissional')
+      .eq('id_profissional', profissionalId)
 
     if (queryError) {
       console.error('Erro na busca do Supabase:', queryError)

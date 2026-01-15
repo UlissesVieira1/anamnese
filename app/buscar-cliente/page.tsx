@@ -107,9 +107,19 @@ export default function BuscarCliente() {
     const carregarClientes = async () => {
       setIsLoadingInicial(true)
       try {
+        const token = localStorage.getItem('profissional_token')
+        if (!token) {
+          console.error('[Frontend] Token não encontrado')
+          return
+        }
+
         const url = `/api/listar-clientes?page=${currentPage}&limit=${itemsPerPage}`
-        console.log('[Frontend] Carregando:', { url, currentPage, itemsPerPage })
-        const response = await fetch(url)
+        console.log('[Frontend] Carregando:', { url, currentPage, itemsPerPage, profissionalId: profissional?.id })
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        })
         const result = await response.json()
 
         console.log('[Frontend] Resposta recebida:', {
